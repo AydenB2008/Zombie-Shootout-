@@ -195,6 +195,11 @@ body.mode-ss #waveNum{font-family:var(--f-zombie);font-size:25px;letter-spacing:
 body.mode-ss #bannerTitle{font-family:var(--f-zombie);font-size:clamp(40px,8vw,66px);letter-spacing:.06em;color:#c4ff6a;text-shadow:0 3px 0 #1f360c,0 0 24px rgba(140,255,60,.45)}
 .mode[data-mode="ss"] b{font-family:var(--f-zombie);font-weight:400;font-size:17px;letter-spacing:.07em;color:#a6f34a}
 .mode[data-mode="ss"].on b{color:#c4ff6a}
+#nightNum{font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#cdc4ff}
+.nights{display:flex;flex-wrap:wrap;gap:8px}
+.night{font:700 14px/1 var(--f-hud);letter-spacing:.12em;text-transform:uppercase;padding:10px 14px;min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.night.on{background:#a6f34a;border-color:#a6f34a;color:#14200a}
+.night:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 @media (max-height:440px){body.mode-ss .title{font-size:clamp(36px,6vw,52px)}}
 .ss-ui{display:none!important}
 body.mode-ss .ss-ui{display:flex!important}
@@ -354,7 +359,7 @@ body.mode-ss{--amber:#ffc23a}
 
   <div class="tl">
     <canvas id="radar" width="96" height="96" aria-label="Radar"></canvas>
-    <div class="wave"><span id="waveNum">Wave 1</span><span id="hostiles">Get ready</span></div>
+    <div class="wave"><span id="nightNum" class="ss-ui">Night 1</span><span id="waveNum">Wave 1</span><span id="hostiles">Get ready</span></div>
   </div>
   <div id="ssTower" class="ss-ui" aria-label="Tower health"><div class="row"><span class="label" id="ssTowerLbl">Tower Lv 1</span><b id="ssTowerHp">1000</b></div><div id="ssTowerBar"><i id="ssTowerFill"></i></div></div>
   <div id="ssChips" class="ss-ui" aria-live="polite"></div>
@@ -2636,6 +2641,8 @@ card.addEventListener('click', e => {
     else { setMode(m); showCard('title'); }
     return;
   }
+  const nb = e.target.closest('[data-night]');
+  if (nb && state === 'title' && mode === 'ss') { ssNightPick = +nb.dataset.night; store.set('fbz-ss-pick', String(ssNightPick)); showCard('title'); return; }
   const se = e.target.closest('[data-ssequip]');
   if (se && state === 'paused' && mode === 'ss') { ssEquip(+se.dataset.ssequip, true); for (const kk in hudCache) delete hudCache[kk]; showCard('pause'); return; }
   const q = e.target.closest('[data-equip]');
@@ -2650,6 +2657,7 @@ card.addEventListener('click', e => {
   const a = b.dataset.act;
   if (a === 'deploy') { if (mode === 'ss') ssDeploy(); else deploy(); }
   else if (a === 'resume') resume();
+  else if (a === 'night') ssNextNight();
   else if (a === 'menu') toMenu();
   else if (a === 'sound') { soundOn = !soundOn; store.set('fbz-sound', soundOn ? '1' : '0'); audioInit(); if (master) master.gain.value = soundOn ? 0.9 : 0; b.textContent = soundLabel(); }
 });
@@ -2756,7 +2764,8 @@ window.addEventListener('keydown', e => {
     else if (k === 'Space') { queueJump(); lastTouch = false; }
     else if (k === 'Escape' || k === 'KeyP') pause();
   } else if (state === 'paused' && (k === 'Escape' || k === 'KeyP')) resume();
-  else if (state === 'title' && k === 'Enter') deploy();
+  else if (state === 'title' && k === 'Enter') { if (mode === 'ss') ssDeploy(); else deploy(); }
+  else if (state === 'won' && k === 'Enter') ssNextNight();
 });
 window.addEventListener('keyup', e => { keys.delete(e.code); if (e.code === 'Space') fKey = false; if (mode === 'ss') { if (e.code === 'KeyG') ssNadeHold('key', false); else if (e.code === 'KeyQ') ssWheelPress('key', false); } });
 window.addEventListener('blur', () => { keys.clear(); fKey = fMouse = false; ssNadeCancel(); });
@@ -2884,7 +2893,7 @@ function pollPad(dt) {
       if (dir) { padNavT -= dt; if (padNavT <= 0) { setPadFocus(els, padFocusI + dir); padNavT = padNavRep ? 0.14 : 0.4; padNavRep = true; } }
       if (press(GP.cross)) { const el = els[padFocusI]; if (el) el.click(); }
       else if (press(GP.circle) && st === 'paused') resume();
-      else if (press(GP.options)) { if (st === 'paused') resume(); else if (st === 'title' || st === 'over') { if (mode === 'ss') ssDeploy(); else deploy(); } }
+      else if (press(GP.options)) { if (st === 'paused') resume(); else if (st === 'won') ssNextNight(); else if (st === 'title' || st === 'over') { if (mode === 'ss') ssDeploy(); else deploy(); } }
     }
   }
   for (let i = 0; i < 18; i++) padPrev[i] = b[i];
@@ -3079,14 +3088,18 @@ function ssBuild() {
 // ---------- Sky: deep blue to violet gradient, big moon with halo, twinkling stars, chunky clouds ----------
 function ssBuildSky(horizon) {
   const dome = new T.Mesh(new T.SphereGeometry(950, 40, 20), new T.ShaderMaterial({
-    uniforms: { cTop: { value: COLS(0x060a26) }, cMid: { value: COLS(0x15206a) }, cHor: { value: horizon }, cLow: { value: COLS(0x1a1636) }, moonDir: { value: SS_MOON_DIR } },
+    uniforms: { cTop: { value: COLS(0x060a26) }, cMid: { value: COLS(0x15206a) }, cHor: { value: horizon }, cLow: { value: COLS(0x1a1636) }, moonDir: { value: SS_MOON_DIR },
+      sunDir: { value: new T.Vector3(0, -1, 0) }, sunK: { value: 0 }, moonK: { value: 1 }, sunCol: { value: COLS(0xffb15e) } },
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); vec4 p = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position = p.xyww; }',
     fragmentShader: [
-      'uniform vec3 cTop, cMid, cHor, cLow, moonDir; varying vec3 vD;',
-      'void main(){ float y = vD.y;',
+      'uniform vec3 cTop, cMid, cHor, cLow, moonDir, sunDir, sunCol; uniform float sunK, moonK; varying vec3 vD;',
+      'void main(){ vec3 d = normalize(vD); float y = d.y;',
       ' vec3 c = y > 0.0 ? mix(mix(cHor, cMid, smoothstep(0.0, 0.22, y)), cTop, smoothstep(0.22, 0.85, y)) : mix(cHor, cLow, 1.0 - smoothstep(-0.25, 0.0, y));',
       ' float m = max(dot(normalize(vD), moonDir), 0.0);',
-      ' c += vec3(0.32, 0.36, 0.75) * pow(m, 14.0) * 0.55 + vec3(0.12, 0.13, 0.3) * pow(m, 3.0) * 0.35;',
+      ' c += (vec3(0.32, 0.36, 0.75) * pow(m, 14.0) * 0.55 + vec3(0.12, 0.13, 0.3) * pow(m, 3.0) * 0.35) * moonK;',
+      // dawn: a glow around the sun plus a warm band along the horizon, strongest on the sun's side
+      ' float s = max(dot(d, sunDir), 0.0); vec2 hz = d.xz / max(length(d.xz), 1e-4); float side = max(dot(hz, normalize(sunDir.xz)), 0.0);',
+      ' c += sunCol * sunK * (pow(s, 10.0) * 0.7 + pow(s, 3.0) * 0.32 + (1.0 - smoothstep(0.0, 0.3, abs(y))) * (0.15 + 0.55 * side * side));',
       ' gl_FragColor = vec4(c, 1.0);',
       ' #include <tonemapping_fragment>',
       ' #include <encodings_fragment>',
@@ -3536,12 +3549,12 @@ function ssWorldTick(dt, t) {
   }
   if (ssLantern) ssLantern.intensity = 2.3 + Math.sin(t * 7.3) * 0.12 + Math.sin(t * 17.1) * 0.06;
   if (ssCrypt) ssCrypt.intensity = 2.0 + Math.sin(t * 1.7) * 0.6;
-  ssStarsA.material.opacity = 0.7 + Math.sin(t * 1.3) * 0.15; ssStarsB.material.opacity = 0.62 + Math.sin(t * 2.1 + 1) * 0.2;
+  ssStarsA.material.opacity = (0.7 + Math.sin(t * 1.3) * 0.15) * ssStarMul; ssStarsB.material.opacity = (0.62 + Math.sin(t * 2.1 + 1) * 0.2) * ssStarMul;
   ssClouds.rotation.y += dt * 0.002;
   const P = ssFireflies.geometry.attributes.position;
   ssFlyData.forEach((f, i) => { f.p += dt * f.s; P.setXYZ(i, f.x + Math.sin(f.p * 0.7) * 1.6, f.y + Math.sin(f.p * 1.3) * 0.5, f.z + Math.cos(f.p * 0.9) * 1.6); });
   P.needsUpdate = true;
-  ssFireflies.material.opacity = 0.75 + Math.sin(t * 3) * 0.2;
+  ssFireflies.material.opacity = (0.75 + Math.sin(t * 3) * 0.2) * ssDayMul;
   for (const m of ssMists) { m.userData.a += dt * m.userData.sp; m.rotation.z = m.userData.a; }
   if (SS.flag) SS.flag.rotation.y = Math.sin(t * 2.2) * 0.35 + 0.4;
 }
@@ -4372,7 +4385,7 @@ function ssReset() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   ssWave = 0; ssWaveActive = false; ssQueue = []; ssInterT = 3.2; ssScore = 0; ssTowerMax = SS_TOWER_MAX; ssTowerHp = ssTowerMax; ssArmor = 0; ssTowerLv = 1; ssNewBest = false;
   ssStats = { kills: 0, heads: 0, shots: 0, hits: 0 };
-  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear();
+  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear(); ssNightReset();
   ssOwned = [0, 1]; ssCur = 0; ssAmmo = SNIPERS.map(d => d.mag); ssCd = 0; ssReloadT = 0; ssChargeT = 0; ssAdsT = ssAdsE = 0; ssScoped = false; ssSwapT = 0; ssScopeHold = 0;
   ssKick = ssRecoil = ssRecoilYaw = ssShake = ssMuzzleT = ssBoltT = ssHeat = 0; ssPx = ssPz = 0; ssLeanX = ssLeanZ = 0; ssMulti = 0; ssLastKill = -9; ssSnapT = 0; ssSnapZ = null; ssDawn = 0;
   player.yaw = Math.atan2(-SS_GRAVE_C.x, -SS_GRAVE_C.z); player.pitch = -0.16;
@@ -4385,19 +4398,22 @@ function ssReset() {
 }
 function ssDeploy() {
   audioInit(); ssReset();
+  const N = ssNightPick > 1 && ssNightPick <= ssNightsOpen ? ssNightPick : 1;
+  if (N > 1) ssSkipToNight(N);
   state = 'play'; card.hidden = true; hud.hidden = false;
   keepAwake(); wantLock();
-  banner('Zombie Shootout', 'Hold the tower till dawn', 2.4);
+  banner(N > 1 ? 'Night ' + N : 'Zombie Shootout', 'Hold the tower till dawn', 2.4);
 }
 function ssToTitle() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   for (const d of SNIPERS) if (d.rig) d.rig.root.visible = false;
   ssTower.rotation.set(0, SS_TROT, 0); ssTower.position.set(0, 0, 0); ssScopeEl.style.opacity = 0;
-  ssUpgReset();
+  ssUpgReset(); ssNightReset();
 }
 function ssStartWave(n) {
   ssWave = n; ssWaveActive = true;
-  ssPickEvent(n);
+  const fin = ssIsFinal(n), wn = ssWaveIn(n), N = ssNightOf(n);
+  if (fin) ssEvt = null; else ssPickEvent(n);   // the stand till dawn has no night event of its own
   const rush = ssEvt === 'rush' ? 1.6 : 1, q = [];
   const counts = {
     walker: Math.round((5 + n * 3) * rush), runner: Math.round((n >= 2 ? Math.floor((n - 1) * 1.7) : 0) * rush * 1.15), brute: n >= 3 ? Math.floor((n - 1) / 2) : 0,
@@ -4408,7 +4424,8 @@ function ssStartWave(n) {
   if (n % 5 === 0) for (let b = 0; b < Math.min(3, n / 5); b++) q.splice(Math.floor(q.length * (0.25 + b * 0.25)), 0, 'boss');
   ssQueue = q.reverse(); ssSpawnT = 0.6; ssMaxAlive = Math.min(10 + n * 2, 26) + (ssEvt === 'rush' ? 8 : 0);
   const fresh = n === 4 ? 'Bloaters: pop them in the crowd' : n === 6 ? 'Spitters hit from range' : n === 7 ? 'Shields: aim for the head' : null;
-  banner('Wave ' + n, n % 5 === 0 ? (n >= 10 ? 'More than one giant is coming' : 'Something huge is coming') : fresh || (n === 1 ? 'The dead are rising' : 'More of them'), 2.6);
+  if (fin) { ssStandStart(n); banner('Final wave', 'Hold the tower till dawn', 3); }
+  else banner('Wave ' + wn, n % 5 === 0 ? (n >= 10 ? 'More than one giant is coming' : 'Something huge is coming') : fresh || (wn === 1 ? (N > 1 ? 'Night ' + N + ' begins' : 'The dead are rising') : 'More of them'), 2.6);
   sfx('bell');
   ssPlanWave(n, ssQueue.length);
 }
@@ -4433,7 +4450,7 @@ function ssUpdateWaves(dt) {
         for (const z of ssZombies) { if (z.state !== 'walk') continue; const d = Math.hypot(z.x, z.z); if (d > 42) { const k = 38 / d; z.x *= k; z.z *= k; z.y = ssH(z.x, z.z); z.best = 38; z.ghostT = 3; } }
       }
     }
-    if (ssWaveActive && !ssQueue.length && ssAlive() === 0) {
+    if (ssWaveActive && !ssFinal && !ssQueue.length && ssAlive() === 0) {
       ssWaveActive = false; ssInterT = 7.5; ssWaveDone();
       const bonus = 250 * ssWave; ssScore += bonus; popup('Wave cleared +' + bonus, 'gold'); sfx('clear');
       ssApplyUpgrade(ssWave);
@@ -4442,10 +4459,10 @@ function ssUpdateWaves(dt) {
       const u = SS_UNLOCKS[ssWave];
       if (u !== undefined && !ssOwned.includes(u)) { ssOwned.push(u); ssEquip(u); setTimeout(() => { if ((state === 'play' || state === 'paused') && mode === 'ss') ssShowUnlock(SNIPERS[u]); }, 1000); }
     }
-  } else { ssInterT -= dt; if (ssInterT <= 0) ssStartWave(ssWave + 1); }
+  } else if (ssDayPhase !== 1) { ssInterT -= dt; if (ssInterT <= 0) ssStartWave(ssWave + 1); }
 }
 function ssTowerHit(dmg, zb) {
-  if (state !== 'play') return;
+  if (state !== 'play' || ssDayPhase === 1) return;   // nothing hurts the tower once the sun is up
   dmg *= 1 - ssArmor;
   ssTowerHp = Math.max(0, ssTowerHp - dmg);
   ssShake = Math.min(0.55, ssShake + dmg / 90);
@@ -4619,14 +4636,15 @@ function ssKillZombie(zb, head, pos, src) {
   if (head) { zHeadPos(zb, _sp); zb.m.head.scale.setScalar(0.01); ssGoo(_sp.x, _sp.y, _sp.z, 18, true, zb.type === 'boss' ? 0xc78bff : null); sfx('pop'); }
   ssStats.kills++; if (head && mine) ssStats.heads++; ssIdleT = 0;
   const pts = Math.round(ty.pts * (head ? 1.5 : 1) * ssEvPts()); ssScore += pts;
-  if (!mine) popup(({ turret: 'Turret ', wire: 'Razor wire ', storm: 'Lightning ', burst: 'Burst ' }[src] || '') + '+' + pts, src === 'storm' ? 'gold' : '');
+  if (src === 'sun') ssSunKills++;
+  else if (!mine) popup(({ turret: 'Turret ', wire: 'Razor wire ', storm: 'Lightning ', burst: 'Burst ' }[src] || '') + '+' + pts, src === 'storm' ? 'gold' : '');
   else {
     popup((head ? 'Headshot ' : src === 'nade' ? 'Blast ' : '') + '+' + pts, head ? 'gold' : '');
     if (time - ssLastKill < 1.3) ssMulti++; else ssMulti = 1; ssLastKill = time;
     if (ssMulti === 2) { ssScore += 50; popup('Double kill +50', 'gold'); } else if (ssMulti === 3) { ssScore += 100; popup('Triple kill +100', 'gold'); } else if (ssMulti >= 4) { ssScore += 150; popup('Multi kill +150', 'gold'); }
     hitmarker(true); rumble(0.3, 0.4, 120);
   }
-  if (zb.type === 'boss') { banner('Behemoth down', '+' + pts, 2.2); ssGoo(zb.x, zb.y + 3, zb.z, 40, true, 0xc78bff); }
+  if (zb.type === 'boss' && src !== 'sun') { banner('Behemoth down', '+' + pts, 2.2); ssGoo(zb.x, zb.y + 3, zb.z, 40, true, 0xc78bff); }
   sfx('zdie');
 }
 
@@ -4757,7 +4775,7 @@ function ssUpdate(dt) {
   camera.updateMatrixWorld();
   for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
   ssSeparate();
-  ssUpdateWaves(dt);
+  ssUpdateWaves(dt); ssNightUpdate(dt);
   ssTurretsUpdate(dt); ssNadesUpdate(dt); ssRocketsUpdate(dt); ssEventsUpdate(dt);
   ssAmbient(dt);
   ssViewmodel(dt);
@@ -4787,6 +4805,7 @@ function ssFrame(dt) {
   if (state === 'play') ssWheelTick(dt);
   if (state === 'play') ssUpdate(dt);
   else if (state === 'over') ssUpdateOver(dt);
+  else if (state === 'won') ssUpdateWon(dt);
   else if (state === 'title') ssUpdateTitle(dt);
   const sdt = dt * ssTS;
   if (state !== 'paused') { ssFxUpdate(sdt); ssWorldTick(sdt, time); ssNumsUpdate(sdt); }
@@ -4799,6 +4818,7 @@ function ssFrame(dt) {
 
 // ---------- HUD ----------
 const ssTowerEl = $('ssTower'), ssTowerFill = $('ssTowerFill'), ssTowerHpEl = $('ssTowerHp'), ssTowerLbl = $('ssTowerLbl'), ssScopeEl = $('ssScope'), ssRangeV = $('ssRangeV'), ssZoomV = $('ssZoomV'), swapBtnEl = $('swapBtn');
+const nightNumEl = $('nightNum');
 const ssNums = [];
 (() => { const host = $('ssNums'); for (let i = 0; i < 18; i++) { const el = document.createElement('div'); el.className = 'ssn'; host.appendChild(el); ssNums.push({ el, life: 9, p: new T.Vector3(), max: 0.9 }); } })();
 let ssNumI = 0;
@@ -4849,9 +4869,13 @@ function ssDrawRadar() {
 }
 function ssHud(dt) {
   const d = ssDef();
-  setText(waveNumEl, 'wave', 'Wave ' + Math.max(1, ssWave));
-  const left = ssQueue.length + ssAlive();
-  setText(hostilesEl, 'host', ssWaveActive ? left + (left === 1 ? ' zombie' : ' zombies') : (ssWave === 0 ? 'Get ready' : 'Next wave in ' + Math.max(1, Math.ceil(ssInterT))));
+  // between waves this shows the wave that is coming up
+  const wd = ssWaveShown(), left = ssQueue.length + ssAlive();
+  setText(nightNumEl, 'night', 'Night ' + ssNightOf(wd));
+  setText(waveNumEl, 'wave', ssIsFinal(wd) ? 'Final wave' : 'Wave ' + ssWaveIn(wd) + '/' + SS_NIGHT_LEN);
+  const st = Math.ceil(ssStandT);
+  setText(hostilesEl, 'host', ssFinal ? 'Dawn in ' + Math.floor(st / 60) + ':' + String(st % 60).padStart(2, '0') : ssDayPhase === 1 ? 'Sunrise'
+    : ssWaveActive ? left + (left === 1 ? ' zombie' : ' zombies') : (ssWave === 0 ? 'Get ready' : 'Next wave in ' + Math.max(1, Math.ceil(ssInterT))));
   setText(scoreEl, 'score', ssScore.toLocaleString());
   setText(wNameEl, 'wname', d.name);
   if (hudCache.wcol !== d.tier) { hudCache.wcol = d.tier; wNameEl.style.color = RARITY_HEX[d.tier]; ssScopeEl.style.setProperty('--rc', '#' + new T.Color(d.color).getHexString()); setText(ssZoomV, 'zoom', d.zoom + '×'); }
@@ -4904,25 +4928,39 @@ function ssArsenalHTML(interactive) {
     return '<li class="' + (got ? 'got' : '') + '" style="' + (got ? 'background:' + RARITY_HEX[d.tier] + ';border-color:' + RARITY_HEX[d.tier] : 'color:' + RARITY_HEX[d.tier]) + (pick ? ';cursor:pointer' : '') + '"' + (pick ? ' data-ssequip="' + i + '" role="button" tabindex="0"' : '') + '>' + d.name + (got ? '' : ' · wave ' + Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i)) + '</li>';
   }).join('') + '</ul>';
 }
+const ssBestLine = () => ssBest.score ? 'Best: night ' + ssNightOf(ssBest.wave) + ', wave ' + ssWaveIn(ssBest.wave) + ' · ' + ssBest.score.toLocaleString() + ' pts' : 'No record yet';
+// the wave being played, or between waves the one coming up
+const ssWaveShown = () => ssWaveActive || ssFinal || ssDayPhase === 1 ? Math.max(1, ssWave) : ssWave + 1;
+const ssWaveTitle = () => ssIsFinal(ssWaveShown()) ? 'Final wave' : 'Wave ' + ssWaveIn(ssWaveShown()) + '/' + SS_NIGHT_LEN;
 function ssCardHTML(kind) {
   if (kind === 'title') {
     const controls = padActive ? '<p class="padline">' + SS_PAD_LEGEND + '</p><p class="padline">Press <b>✕</b> to start.</p>'
       : isTouch ? '<dl class="controls"><dt>Fire</dt><dd>Hold to shoot. You aim in automatically.</dd><dt>Nade</dt><dd>Hold to see the arc, let go to throw</dd><dt>Switch</dt><dd>Tap to swap, hold and drag for the weapon wheel</dd></dl>'
       : '<dl class="controls"><dt>Mouse</dt><dd>Look. Click to fire, which aims in</dd><dt>G</dt><dd>Hold to aim a grenade, let go to throw</dd><dt>Q / R</dt><dd>Switch weapon, reload</dd></dl>';
+    const nights = ssNightsOpen > 1 ? '<div class="nights" role="radiogroup" aria-label="Start at">' + Array.from({ length: ssNightsOpen }, (_, i) => i + 1).map(n =>
+      '<button type="button" class="night' + (n === ssNightPick ? ' on' : '') + '" data-night="' + n + '" role="radio" aria-checked="' + (n === ssNightPick) + '">Night ' + n + '</button>').join('') + '</div>' : '';
     return '<div class="panel">' + modeTabs() + '<h1 class="title">Zombie Shootout</h1>' +
-      '<p class="lead">Hold your tower through the night. Zombies pour out of the graveyard and the woods to tear it down. Every wave you clear makes the tower tougher and unlocks wilder guns, rockets and turrets.</p>' + controls +
-      '<div class="actions"><button class="btn primary" type="button" data-act="deploy">Start</button><button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button></div>' +
-      '<p class="best">' + (ssBest.score ? 'Best: wave ' + ssBest.wave + ', ' + ssBest.score.toLocaleString() + ' pts' : 'No record yet') + '</p></div>';
+      '<p class="lead">Hold your tower for ten waves. On the last one, hang on until sunrise burns every zombie left. Each wave makes the tower tougher and unlocks wilder guns, rockets and turrets.</p>' + controls + nights +
+      '<div class="actions"><button class="btn primary" type="button" data-act="deploy">' + (ssNightPick > 1 ? 'Start night ' + ssNightPick : 'Start') + '</button><button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button></div>' +
+      '<p class="best">' + ssBestLine() + '</p></div>';
+  }
+  if (kind === 'won') {
+    const acc = ssStats.shots ? Math.round(ssStats.hits / ssStats.shots * 100) : 0, N = ssWonNight;
+    return '<div class="panel"><p class="eyebrow">Sunrise</p><h1 class="title">Night ' + N + ' survived</h1>' +
+      '<p class="lead">The sun burned ' + ssSunKills + (ssSunKills === 1 ? ' zombie' : ' zombies') + '. Night bonus +' + ssWonBonus.toLocaleString() + '. Night ' + (N + 1) + ' is unlocked, with tougher zombies and a longer wait for dawn.</p>' +
+      '<div class="stats"><div><b>' + ssStats.kills + '</b><span>Zombies</span></div><div><b>' + ssStats.heads + '</b><span>Headshots</span></div><div><b>' + acc + '%</b><span>Accuracy</span></div><div><b>' + ssScore.toLocaleString() + '</b><span>Score</span></div></div>' +
+      (ssNewBest ? '<p class="tag">New best</p>' : '') +
+      '<div class="actions"><button class="btn primary" type="button" data-act="night">Start night ' + (N + 1) + '</button><button class="btn ghost" type="button" data-act="menu">Menu</button></div></div>';
   }
   if (kind === 'pause') {
-    return '<div class="panel"><p class="eyebrow">Paused</p><h1 class="title">Wave ' + Math.max(1, ssWave) + '</h1>' +
+    return '<div class="panel"><p class="eyebrow">Paused · Night ' + ssNightOf(ssWaveShown()) + '</p><h1 class="title">' + ssWaveTitle() + '</h1>' +
       '<p class="lead">' + ssScore.toLocaleString() + ' pts, ' + ssStats.kills + ' zombies down. ' + (padActive ? 'Pick a weapon with the D-pad and press ✕.' : 'Tap a weapon to carry it.') + '</p>' + ssArsenalHTML(true) + (padActive ? '<p class="padline">' + SS_PAD_LEGEND + '</p>' : '') +
       '<div class="actions"><button class="btn primary" type="button" data-act="resume">Resume</button><button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button><button class="btn ghost" type="button" data-act="menu">Quit</button></div></div>';
   }
   const acc = ssStats.shots ? Math.round(ssStats.hits / ssStats.shots * 100) : 0;
-  return '<div class="panel"><p class="eyebrow danger">Tower destroyed</p><h1 class="title">Wave ' + Math.max(1, ssWave) + '</h1>' +
+  return '<div class="panel"><p class="eyebrow danger">Tower destroyed · Night ' + ssNightOf(ssWaveShown()) + '</p><h1 class="title">' + ssWaveTitle() + '</h1>' +
     '<div class="stats"><div><b>' + ssStats.kills + '</b><span>Zombies</span></div><div><b>' + ssStats.heads + '</b><span>Headshots</span></div><div><b>' + acc + '%</b><span>Accuracy</span></div><div><b>' + ssScore.toLocaleString() + '</b><span>Score</span></div></div>' +
-    ssArsenalHTML(false) + (ssNewBest ? '<p class="tag">New best</p>' : ssBest.score ? '<p class="best">Best: wave ' + ssBest.wave + ', ' + ssBest.score.toLocaleString() + ' pts</p>' : '') +
+    ssArsenalHTML(false) + (ssNewBest ? '<p class="tag">New best</p>' : ssBest.score ? '<p class="best">' + ssBestLine() + '</p>' : '') +
     '<div class="actions"><button class="btn primary" type="button" data-act="deploy">Try again</button><button class="btn ghost" type="button" data-act="menu">Menu</button></div></div>';
 }
 
@@ -4950,17 +4988,18 @@ function ssUpgReset() {
   ssNadesClear();
   ssUpgEl.classList.remove('show');
 }
-function ssApplyUpgrade(w) {
+function ssApplyUpgrade(w, quiet) {   // quiet: no sparks or toast (starting at a later night, or behind the dawn card)
   ssTowerLv = w + 1;
   ssTowerMax += SS_HP_STEP; ssArmor = Math.min(SS_ARMOR_MAX, ssArmor + SS_ARMOR_STEP);
   ssTowerHp = Math.min(ssTowerMax, ssTowerHp + SS_HP_STEP + Math.round(ssTowerMax * 0.2));
   const u = SS_UPG[w];
   if (u) {
-    if (u.vis && SS.upg[u.vis]) { SS.upg[u.vis].visible = true; ssUpgFx(u.vis); }
+    if (u.vis && SS.upg[u.vis]) { SS.upg[u.vis].visible = true; if (!quiet) ssUpgFx(u.vis); }
     if (u.vis === 'wire') ssWireOn = true;
-    if (u.turret !== undefined) ssTurretInstall(ssTurrets[u.turret]);
+    if (u.turret !== undefined) ssTurretInstall(ssTurrets[u.turret], quiet);
     if (u.turretLv) ssTurretLv = u.turretLv;
   }
+  if (quiet) return;
   const stat = '+' + SS_HP_STEP + ' max HP · armour ' + Math.round(ssArmor * 100) + '%';
   setTimeout(() => { if (state === 'play' && mode === 'ss') ssToast('Tower upgrade · Lv ' + ssTowerLv, u ? u.name : 'Reinforced', u ? u.sub + '. ' + stat : stat); }, 650);
 }
@@ -5092,12 +5131,12 @@ function ssBuildTurrets() {
     ssTurrets.push({ mount, body, SC, yawG, pitchG, spinG, eye, halo, tip, flash, laser, muzzle, out, yaw: out, pitch: -0.1, on: false, inst: 0, tgt: null, retT: 0, cd: 0, cool: 0, shots: 0, spin: 0, flashT: 0, kick: 0, ph: i * 2.1, ox: 0, oz: 0 });
   }
 }
-function ssTurretInstall(t) {
+function ssTurretInstall(t, quiet) {
   if (!t || t.on) return;
   t.on = true; t.inst = 0; t.mount.visible = true; t.yaw = t.out; t.pitch = 0.4; t.tgt = null; t.cool = 0; t.shots = 0;
   t.mount.updateMatrixWorld(true); t.mount.getWorldPosition(_u5a);
   const L = Math.hypot(_u5a.x, _u5a.z) || 1; t.ox = _u5a.x / L; t.oz = _u5a.z / L;
-  sfx('turretOn');
+  if (quiet) { t.inst = 1; t.body.position.y = 0; t.body.scale.setScalar(t.SC); } else sfx('turretOn');
 }
 function ssTurretPick(t) {
   t.mount.getWorldPosition(_u5a);
@@ -5454,14 +5493,17 @@ function ssEnvUpdate(dt) {
   else if (ssEvt) ssEvK = Math.min(1, ssEvK + dt * 0.45);
   const B = SS_ENV, E = (ssEvVis && SS_ENV_EV[ssEvVis]) || {}, k = ssEvK * ssEvK * (3 - 2 * ssEvK), fl = ssEvFlash;
   ssEvFlash = Math.max(0, ssEvFlash - dt * 4.5);
-  const mix = (out, base, tgt, add) => { out.copy(base); if (tgt) out.lerp(tgt, k); if (add) out.lerp(SS_FLASH_C, add); return out; };
+  // night base, then the night's event, then the sunrise on top (kd 0 at night, 1 in full daylight)
+  const kd = clamp(ssDawnK, 0, 1), W = SS_DAWN;
+  const mix = (out, base, tgt, dawn, add) => { out.copy(base); if (tgt) out.lerp(tgt, k); if (dawn && kd > 0) out.lerp(dawn, kd); if (add) out.lerp(SS_FLASH_C, add); return out; };
   const u = SS.dome.material.uniforms;
-  mix(ssScene.fog.color, B.fog, E.fog, fl * 0.35); ssScene.fog.density = lerp(B.dens, E.dens || B.dens, k);
-  mix(u.cTop.value, B.top, E.top, fl * 0.35); mix(u.cMid.value, B.mid, E.mid, fl * 0.45); mix(u.cHor.value, B.hor, E.hor, fl * 0.5); mix(u.cLow.value, B.low, E.low, fl * 0.2);
-  mix(SS.hemi.color, B.hSky, E.hSky); mix(SS.hemi.groundColor, B.hGnd, E.hGnd); SS.hemi.intensity = B.hI + fl * 2.8;
-  mix(ssMoonLight.color, B.mCol, E.mCol); ssMoonLight.intensity = lerp(B.mI, E.mI || B.mI, k) + fl * 2.2;
-  mix(SS.moonSpr.material.color, B.moon, E.moon); mix(SS.halo.material.color, B.halo, E.halo); mix(ssClouds.children[0].material.color, B.cloud, E.cloud, fl * 0.6);
-  if (E.stars !== undefined) { const s = lerp(1, E.stars, k); ssStarsA.material.opacity *= s; ssStarsB.material.opacity *= s; }
+  mix(ssScene.fog.color, B.fog, E.fog, W.fog, fl * 0.35); ssScene.fog.density = lerp(lerp(B.dens, E.dens || B.dens, k), W.dens, kd);
+  mix(u.cTop.value, B.top, E.top, W.top, fl * 0.35); mix(u.cMid.value, B.mid, E.mid, W.mid, fl * 0.45); mix(u.cHor.value, B.hor, E.hor, W.hor, fl * 0.5); mix(u.cLow.value, B.low, E.low, W.low, fl * 0.2);
+  mix(SS.hemi.color, B.hSky, E.hSky, W.hSky); mix(SS.hemi.groundColor, B.hGnd, E.hGnd, W.hGnd); SS.hemi.intensity = lerp(B.hI, W.hI, kd) + fl * 2.8;
+  mix(ssMoonLight.color, B.mCol, E.mCol, W.mCol); ssMoonLight.intensity = lerp(lerp(B.mI, E.mI || B.mI, k), W.mI, kd) + fl * 2.2;
+  mix(SS.moonSpr.material.color, B.moon, E.moon); mix(SS.halo.material.color, B.halo, E.halo); mix(ssClouds.children[0].material.color, B.cloud, E.cloud, W.cloud, fl * 0.6);
+  ssStarMul = (E.stars !== undefined ? lerp(1, E.stars, k) : 1) * (1 - kd); ssDayMul = 1 - kd;
+  ssDawnVisuals(kd);
   // eyes burn brighter in the fog and red under the blood moon
   const kf = ssEvVis === 'fog' ? k : 0, kb = ssEvVis === 'blood' ? k : 0;
   for (const z of ssZombies) {
@@ -5530,7 +5572,7 @@ function ssAmbush() {
   banner('Ambush!', 'Behind you', 2.2); sfx('howl', 30); rumble(0.5, 0.4, 300);
 }
 function ssBossUpdate(dt) {
-  if (ssWave < 10) return;
+  if (ssWave < 10 || ssDayPhase === 1) return;
   for (const b of ssZombies) {
     if (b.type !== 'boss' || (b.state !== 'walk' && b.state !== 'attack')) continue;
     if (b.sumT === undefined) b.sumT = rand(5, 8);
@@ -5969,6 +6011,205 @@ Object.assign(SFX, {
     nz({ type: 'bandpass', f0: 650, q: 1.4, dur: 0.16, vol: 0.4 }); tn({ f0: 170, f1: 90, dur: 0.12, vol: 0.18 });
     nz({ type: 'bandpass', f0: 1200, f1: 600, q: 1.2, dur: 0.35, vol: 0.18, att: 0.05, when: 0.35 });
   }
+});
+
+// ===== Part S9: nights — ten waves a night; the tenth is a stand until sunrise, when the light burns every zombie left =====
+const SS_NIGHT_LEN = 10;
+const ssNightOf = w => Math.floor((Math.max(1, w) - 1) / SS_NIGHT_LEN) + 1;
+const ssWaveIn = w => ((Math.max(1, w) - 1) % SS_NIGHT_LEN) + 1;
+const ssIsFinal = n => n > 0 && n % SS_NIGHT_LEN === 0;
+const ssStandLen = night => Math.min(150, 90 + (night - 1) * 15);     // seconds to hold out for the sunrise
+// phase: 0 night, 1 sunrise (burning), 2 day (the victory card), 3 dusk (night falls before the next one)
+let ssFinal = false, ssStandT = 0, ssStandMax = 90, ssDayPhase = 0, ssDayT = 0, ssDawnK = 0, ssDawnK0 = 0, ssTickN = -1;
+let ssSunKills = 0, ssWonNight = 0, ssWonBonus = 0, ssStarMul = 1, ssDayMul = 1;
+let ssNightsOpen = Math.max(1, Math.floor(+store.get('fbz-ss-nights', '1')) || 1);
+let ssNightPick = clamp(Math.floor(+store.get('fbz-ss-pick', '1')) || 1, 1, ssNightsOpen);
+let ssSun = null, ssSunHalo = null;
+const ssBurns = [];   // fires that cling to a zombie while it burns, then sink onto the body
+const SS_SUN_H = new T.Vector2(SS_GRAVE_C.x, SS_GRAVE_C.z).normalize();   // the sun comes up behind the graveyard
+const ssSunDir = new T.Vector3(SS_SUN_H.x, -0.1, SS_SUN_H.y).normalize(), _n9a = new T.Vector3(), _n9b = new T.Vector3();
+// sunrise palette the sky, fog and lights blend toward
+const SS_DAWN = {
+  top: COLS(0x3456a8), mid: COLS(0x9a72b8), hor: COLS(0xffaa6a), low: COLS(0x4c3a54), fog: COLS(0xc99a90), dens: 0.0052,
+  hSky: COLS(0xffe2c4), hGnd: COLS(0x5c4638), hI: 1.5, mCol: COLS(0xffc68c), mI: 3.0, cloud: new T.Color(2.5, 1.65, 1.5)
+};
+
+function ssNightReset() {
+  for (const b of ssBurns) { b.on = false; b.z = null; b.g.visible = false; }
+  ssFinal = false; ssStandT = 0; ssDayPhase = 0; ssDayT = 0; ssDawnK = 0; ssTickN = -1; ssSunKills = 0; ssWonNight = 0; ssWonBonus = 0;
+}
+// start a run at a later night: the tower, weapons and grenades as if the earlier nights were won
+function ssSkipToNight(N) {
+  if (N <= 1) return;
+  const w0 = (N - 1) * SS_NIGHT_LEN;
+  for (let w = 1; w <= w0; w++) { ssApplyUpgrade(w, true); const u = SS_UNLOCKS[w]; if (u !== undefined && !ssOwned.includes(u)) ssOwned.push(u); }
+  ssOwned.sort((a, b) => a - b);
+  ssWave = w0; ssTowerHp = ssTowerMax; ssNadeN = SS_NADE_MAX; ssInterT = 4;
+}
+function ssStandStart(n) {
+  ssFinal = true; ssStandMax = ssStandT = ssStandLen(ssNightOf(n)); ssTickN = -1;
+}
+// the horde never stops coming until the sun is up
+function ssStandRefill() {
+  const pool = ['walker', 'walker', 'walker', 'runner', 'runner', 'runner', 'bloater', 'brute', 'spitter', 'shield'];
+  for (let i = 0; i < 6; i++) ssQueue.push(pool[Math.floor(Math.random() * pool.length)]);
+}
+function ssNightUpdate(dt) {
+  if (ssFinal) {
+    ssStandT = Math.max(0, ssStandT - dt);
+    if (!ssQueue.length && ssStandT > 4) ssStandRefill();
+    const p = 1 - ssStandT / ssStandMax; ssDawnK = 0.3 * Math.pow(p, 1.6);   // the sky slowly greys toward dawn
+    const s = Math.ceil(ssStandT);
+    if (s !== ssTickN) {
+      ssTickN = s;
+      if (s === 30) { popup('Dawn is coming', 'gold'); sfx('chime'); }
+      else if (s <= 5 && s > 0) sfx('tick');
+    }
+    if (ssStandT <= 0) ssSunrise();
+  } else if (ssDayPhase === 1) {
+    ssDayT += dt;
+    const e = clamp(ssDayT / 4, 0, 1); ssDawnK = lerp(ssDawnK0, 1, e * e * (3 - 2 * e));
+    // the light reaches every zombie within a couple of seconds, stragglers included
+    for (const z of ssZombies) {
+      if (z.state === 'dead') continue;
+      if (z.sunT === undefined) z.sunT = 0.45 + Math.random() * 1.5;
+      if (z.burnT === undefined) { z.sunT -= dt; if (z.sunT <= 0) ssIgnite(z); }
+      else { z.burnT -= dt; z.flinch = Math.max(z.flinch, 0.6); if (z.burnT <= 0) ssBurnZombie(z); }
+    }
+    ssBurnsUpdate(dt);
+    if (ssDayT > 5.6) ssNightWon();
+  } else if (ssDayPhase === 3) {
+    ssDayT += dt;
+    const e = clamp(ssDayT / 7, 0, 1); ssDawnK = 1 - e * e * (3 - 2 * e);
+    if (e >= 1) { ssDayPhase = 0; ssDawnK = 0; }
+  }
+}
+function ssSunrise() {
+  ssFinal = false; ssDayPhase = 1; ssDayT = 0; ssDawnK0 = ssDawnK; ssSunKills = 0;
+  ssQueue = []; ssWaveActive = false; ssAmbushAt = -1; ssWaveDone();
+  banner('Sunrise!', 'The light burns them all', 3.2);
+  sfx('dawn'); rumble(0.5, 0.5, 700); ssShake = Math.max(ssShake, 0.12);
+}
+// catch fire: stagger about in flames for a moment before crumbling
+function ssIgnite(z) {
+  ssBurnSetup();
+  const b = ssBurns.find(q => !q.on);
+  z.burnT = b ? rand(0.8, 1.1) : 0; z.speed *= 0.3;
+  sfx('ignite', camera.position.distanceTo(_n9a.set(z.x, z.y, z.z)));
+  if (b) { b.on = true; b.z = z; b.t = 0; b.dead = false; b.g.visible = true; }
+}
+function ssBurnSetup() {
+  if (ssBurns.length) return;
+  for (let i = 0; i < 16; i++) {
+    // a warm glow around the body plus three solid flame tongues (solid so they still read as fire in daylight)
+    const g = new T.Group(), fl = [new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: 0xff8a30, blending: T.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false }))];
+    for (let k = 0; k < 3; k++) fl.push(new T.Sprite(new T.SpriteMaterial({ map: TEX.ssFlame, color: [0xffd070, 0xffb058, 0xff9444][k], depthWrite: false, transparent: true, toneMapped: false })));
+    for (const s of fl) g.add(s);
+    g.visible = false; ssScene.add(g); ssBurns.push({ g, fl, z: null, t: 0, on: false, dead: false, t0: 0, smk: 0 });
+  }
+}
+function ssBurnsUpdate(dt) {
+  for (const b of ssBurns) {
+    if (!b.on) continue;
+    b.t += dt;
+    const z = b.z, ty = ZTYPES[z.type], s = ty.scale || 1, h = ty.top * s;
+    if (z.state === 'dead' && !b.dead) { b.dead = true; b.t0 = b.t; }
+    const grow = clamp(b.t / 0.3, 0, 1), fade = b.dead ? clamp(1 - (b.t - b.t0) / 0.9, 0, 1) : 1;
+    if (fade <= 0) { b.on = false; b.z = null; b.g.visible = false; continue; }
+    const [aura, ...tongues] = b.fl, sink = b.dead ? 0.35 : 1;
+    aura.position.set(z.x, z.y + (b.dead ? 0.35 : h * 0.5), z.z); aura.scale.setScalar(2.6 * s * grow * fade * sink); aura.material.opacity = 0.7 * fade;
+    tongues.forEach((f, k) => {   // licking up from the waist past the head; on a fallen body they sit low along it
+      const fk = 0.82 + Math.sin(time * (13 + k * 4) + k * 2) * 0.18, w = [1.0, 0.85, 0.62][k], ht = [1.5, 1.45, 1.15][k];
+      f.position.set(z.x + Math.sin(k * 2.1 + b.t * 3) * 0.16 * s, z.y + (b.dead ? 0.3 + k * 0.12 : h * (0.32 + k * 0.33)), z.z + Math.cos(k * 1.7 + b.t * 2.5) * 0.16 * s);
+      f.scale.set(w * s * grow * fk * fade, ht * s * grow * fk * fade * sink, 1); f.material.opacity = 0.95 * fade; f.material.rotation = Math.sin(time * 7 + k) * 0.12;
+    });
+    if (Math.random() < dt * 12 * fade) ssSprite(z.x + rand(-0.3, 0.3) * s, z.y + rand(0.4, h), z.z + rand(-0.3, 0.3) * s, 0xffb050, 0.16, 0.04, rand(0.4, 0.8), rand(-0.4, 0.4), rand(1.5, 3), rand(-0.4, 0.4), 1);
+    b.smk -= dt; if (b.smk <= 0 && fade > 0.3) { b.smk = 0.13; ssSprite(z.x + rand(-0.2, 0.2), z.y + (b.dead ? 0.6 : h + 0.2), z.z + rand(-0.2, 0.2), 0x3a3238, 0.5 * s, rand(1.6, 2.4) * s, rand(1.2, 1.8), rand(-0.3, 0.3), rand(1.2, 2), rand(-0.3, 0.3), 0.5, 0, true); }
+  }
+}
+function ssBurnZombie(z) {
+  const ty = ZTYPES[z.type], s = ty.scale || 1, h = ty.top * s;
+  for (let i = 0; i < 8; i++) ssSprite(z.x + rand(-0.4, 0.4) * s, z.y + rand(0.1, h * 0.9), z.z + rand(-0.4, 0.4) * s, [0xff7a22, 0xffb03a, 0xffd870, 0xff5418][i % 4], 0.5 * s, rand(1.0, 1.7) * s, rand(0.45, 0.85), rand(-0.4, 0.4), rand(1.4, 3), rand(-0.4, 0.4), 0.95);
+  for (let i = 0; i < 4; i++) ssSprite(z.x + rand(-0.4, 0.4), z.y + rand(h * 0.5, h + 0.5), z.z + rand(-0.4, 0.4), 0x4a4048, s, rand(2.2, 3.4) * s, rand(1.6, 2.6), rand(-0.5, 0.5), rand(1, 2), rand(-0.5, 0.5), 0.55, 0, true);
+  ssSparks(z.x, z.y + h * 0.5, z.z, 0xffc060, 12, 3);
+  sfx('burn', camera.position.distanceTo(_n9a.set(z.x, z.y, z.z)));
+  ssHitZombie(z, 1e9, false, _n9a.set(z.x, z.y + h * 0.6, z.z), 0xffa040, 'sun');
+}
+function ssNightWon() {
+  const N = ssNightOf(ssWave);
+  ssDayPhase = 2; ssWonNight = N;
+  ssWonBonus = 2500 * N; ssScore += ssWonBonus;
+  ssApplyUpgrade(ssWave, true); ssNadeN = SS_NADE_MAX;
+  ssNightsOpen = Math.max(ssNightsOpen, N + 1); store.set('fbz-ss-nights', String(ssNightsOpen));
+  ssNightPick = N + 1; store.set('fbz-ss-pick', String(ssNightPick));
+  ssNewBest = ssScore > ssBest.score;
+  if (ssNewBest) { ssBest = { wave: ssWave, score: ssScore }; store.set('fbz-ss-best', JSON.stringify(ssBest)); }
+  state = 'won'; ssOverT = 0; releaseInputs(); adsToggle = false; ssAdsT = ssAdsE = 0; ssScoped = false; ssScopeEl.style.opacity = 0; ssWheelCancel();
+  if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+  setTimeout(() => { if (state === 'won' && mode === 'ss') { hud.hidden = true; showCard('won'); } }, 900);
+}
+// keep the run going: the tower is patched up during the day, then night falls again
+function ssNextNight() {
+  if (state !== 'won') return;
+  state = 'play'; card.hidden = true; hud.hidden = false; for (const k in hudCache) delete hudCache[k];
+  ssDayPhase = 3; ssDayT = 0; ssTowerHp = ssTowerMax; ssInterT = 8.5;
+  keepAwake(); wantLock();
+  banner('Night ' + (ssWonNight + 1), 'Tower repaired. Night falls again', 3);
+  sfx('dusk');
+}
+// watching the sun come up behind the victory card
+function ssUpdateWon(dt) {
+  time += dt; ssOverT += dt;
+  for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
+  ssBurnsUpdate(dt);
+  // turn toward the sun, keeping it to the right of the card on a wide screen
+  const sy = Math.atan2(-ssSunDir.x, -ssSunDir.z) + (camera.aspect > 1.3 ? 0.42 : 0), k = Math.min(1, dt * 0.9);
+  player.yaw += angDiff(sy, player.yaw) * k; player.pitch += (0.1 - player.pitch) * k;
+  ssCamera(dt);
+}
+
+// ---------- The sun: a disc and a big warm halo that rise over the graveyard; the moon fades out ----------
+function ssSunSetup() {
+  if (ssSun) return;
+  const c = cv(128), x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.36, '#ffffff'); g.addColorStop(0.43, 'rgba(255,255,255,0.85)'); g.addColorStop(0.5, 'rgba(255,255,255,0.25)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+  ssSunHalo = new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: 0xff9a48, transparent: true, opacity: 0, depthWrite: false, fog: false, toneMapped: false, blending: T.AdditiveBlending }));
+  ssSunHalo.scale.setScalar(640); ssSunHalo.renderOrder = -8;
+  ssSun = new T.Sprite(new T.SpriteMaterial({ map: tx(c, false, false), color: 0xffe08c, transparent: true, opacity: 0, depthWrite: false, fog: false, toneMapped: false }));
+  ssSun.scale.setScalar(150); ssSun.renderOrder = -7;
+  ssSunHalo.visible = ssSun.visible = false;
+  ssScene.add(ssSunHalo, ssSun);
+}
+function ssDawnVisuals(kd) {
+  ssSunSetup();
+  const u = SS.dome.material.uniforms, rise = clamp((kd - 0.3) / 0.7, 0, 1), el = -0.1 + 0.3 * rise * rise * (3 - 2 * rise);
+  ssSunDir.set(SS_SUN_H.x * Math.cos(el), Math.sin(el), SS_SUN_H.y * Math.cos(el));
+  u.sunDir.value.copy(ssSunDir); u.sunK.value = kd; u.moonK.value = 1 - kd;
+  ssSun.position.copy(ssSunDir).multiplyScalar(820); ssSunHalo.position.copy(ssSun.position);
+  ssSun.visible = ssSunHalo.visible = kd > 0.01;
+  ssSun.material.opacity = clamp(kd * 2.2, 0, 1); ssSunHalo.material.opacity = 0.5 * kd;
+  SS.moonSpr.material.opacity = 1 - kd; SS.halo.material.opacity = 0.55 * (1 - kd);
+  // the key light swings from the moon to the low sun (never from below the ground)
+  _n9b.copy(ssSunDir); _n9b.y = Math.max(_n9b.y, 0.16); _n9b.normalize();
+  _n9a.copy(SS_MOON_DIR).lerp(_n9b, kd).normalize(); ssMoonLight.position.copy(_n9a).multiplyScalar(110);
+  renderer.toneMappingExposure = SS_EXPOSURE + 0.1 * kd;
+}
+
+Object.assign(SFX, {
+  dawn() {   // a warm chord swelling up, then birdsong
+    [261.6, 329.6, 392, 523.3].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 3.4, vol: 0.05, att: 0.9, when: i * 0.08 }));
+    tn({ type: 'sine', f0: 130.8, dur: 3.6, vol: 0.07, att: 1.1 });
+    for (let i = 0; i < 7; i++) tn({ type: 'sine', f0: rand(2600, 3400), f1: rand(3600, 4600), dur: 0.08, vol: 0.03, when: 1.5 + i * rand(0.12, 0.32) });
+  },
+  burn(d) {
+    const v = clamp(1.6 / (1 + (d || 0) * 0.05), 0.05, 0.4);
+    nz({ type: 'bandpass', f0: 3200, f1: 5200, q: 0.8, dur: 0.7, vol: v * 0.45, att: 0.05 }); nz({ type: 'lowpass', f0: 900, f1: 260, dur: 0.6, vol: v * 0.5 });
+  },
+  ignite(d) { const v = clamp(1.4 / (1 + (d || 0) * 0.05), 0.04, 0.3); nz({ type: 'lowpass', f0: 500, f1: 2600, dur: 0.35, vol: v, att: 0.04 }); },
+  tick() { tn({ type: 'square', f0: 1250, dur: 0.05, vol: 0.05 }); },
+  chime() { tn({ type: 'triangle', f0: 784, dur: 0.5, vol: 0.06 }); tn({ type: 'triangle', f0: 1175, dur: 0.7, vol: 0.05, when: 0.12 }); },
+  dusk() { [220, 261.6, 329.6].forEach((f, i) => tn({ type: 'sine', f0: f, f1: f * 0.97, dur: 2.6, vol: 0.05, att: 0.7, when: i * 0.12 })); }
 });
 
 // ===== Part Z: start-up =====
