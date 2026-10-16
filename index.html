@@ -196,10 +196,8 @@ body.mode-ss #bannerTitle{font-family:var(--f-zombie);font-size:clamp(40px,8vw,6
 .mode[data-mode="ss"] b{font-family:var(--f-zombie);font-weight:400;font-size:17px;letter-spacing:.07em;color:#a6f34a}
 .mode[data-mode="ss"].on b{color:#c4ff6a}
 #nightNum{font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#cdc4ff}
-.nights{display:flex;flex-wrap:wrap;gap:8px}
-.night{font:700 14px/1 var(--f-hud);letter-spacing:.12em;text-transform:uppercase;padding:10px 14px;min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
-.night.on{background:#a6f34a;border-color:#a6f34a;color:#14200a}
-.night:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.saved{margin:0;font-size:14px;font-weight:600;letter-spacing:.06em;color:#c4ff6a}
+.btn.ghost.warn{color:#ffb35a;border-color:#ffb35a}
 @media (max-height:440px){body.mode-ss .title{font-size:clamp(36px,6vw,52px)}}
 .ss-ui{display:none!important}
 body.mode-ss .ss-ui{display:flex!important}
@@ -2641,8 +2639,6 @@ card.addEventListener('click', e => {
     else { setMode(m); showCard('title'); }
     return;
   }
-  const nb = e.target.closest('[data-night]');
-  if (nb && state === 'title' && mode === 'ss') { ssNightPick = +nb.dataset.night; store.set('fbz-ss-pick', String(ssNightPick)); showCard('title'); return; }
   const se = e.target.closest('[data-ssequip]');
   if (se && state === 'paused' && mode === 'ss') { ssEquip(+se.dataset.ssequip, true); for (const kk in hudCache) delete hudCache[kk]; showCard('pause'); return; }
   const q = e.target.closest('[data-equip]');
@@ -2658,6 +2654,8 @@ card.addEventListener('click', e => {
   if (a === 'deploy') { if (mode === 'ss') ssDeploy(); else deploy(); }
   else if (a === 'resume') resume();
   else if (a === 'night') ssNextNight();
+  else if (a === 'continue') ssDeploy(true);
+  else if (a === 'newgame') { if (ssNewArm) ssDeploy(false); else { ssNewArm = true; showCard('title'); } }
   else if (a === 'menu') toMenu();
   else if (a === 'sound') { soundOn = !soundOn; store.set('fbz-sound', soundOn ? '1' : '0'); audioInit(); if (master) master.gain.value = soundOn ? 0.9 : 0; b.textContent = soundLabel(); }
 });
@@ -2764,7 +2762,7 @@ window.addEventListener('keydown', e => {
     else if (k === 'Space') { queueJump(); lastTouch = false; }
     else if (k === 'Escape' || k === 'KeyP') pause();
   } else if (state === 'paused' && (k === 'Escape' || k === 'KeyP')) resume();
-  else if (state === 'title' && k === 'Enter') { if (mode === 'ss') ssDeploy(); else deploy(); }
+  else if (state === 'title' && k === 'Enter') { if (mode === 'ss') ssDeploy(!!ssSaveGet()); else deploy(); }
   else if (state === 'won' && k === 'Enter') ssNextNight();
 });
 window.addEventListener('keyup', e => { keys.delete(e.code); if (e.code === 'Space') fKey = false; if (mode === 'ss') { if (e.code === 'KeyG') ssNadeHold('key', false); else if (e.code === 'KeyQ') ssWheelPress('key', false); } });
@@ -2893,7 +2891,7 @@ function pollPad(dt) {
       if (dir) { padNavT -= dt; if (padNavT <= 0) { setPadFocus(els, padFocusI + dir); padNavT = padNavRep ? 0.14 : 0.4; padNavRep = true; } }
       if (press(GP.cross)) { const el = els[padFocusI]; if (el) el.click(); }
       else if (press(GP.circle) && st === 'paused') resume();
-      else if (press(GP.options)) { if (st === 'paused') resume(); else if (st === 'won') ssNextNight(); else if (st === 'title' || st === 'over') { if (mode === 'ss') ssDeploy(); else deploy(); } }
+      else if (press(GP.options)) { if (st === 'paused') resume(); else if (st === 'won') ssNextNight(); else if (st === 'title' || st === 'over') { if (mode === 'ss') ssDeploy(st === 'title' && !!ssSaveGet()); else deploy(); } }
     }
   }
   for (let i = 0; i < 18; i++) padPrev[i] = b[i];
@@ -4396,13 +4394,15 @@ function ssReset() {
   unlockEl.classList.remove('show'); hintEl.hidden = true; vig.style.opacity = 0; ssScopeEl.style.opacity = 0;
   for (const n of ssNums) { n.life = 9; n.el.style.opacity = 0; }
 }
-function ssDeploy() {
-  audioInit(); ssReset();
-  const N = ssNightPick > 1 && ssNightPick <= ssNightsOpen ? ssNightPick : 1;
-  if (N > 1) ssSkipToNight(N);
+// cont: pick up the saved run; otherwise a fresh run from night 1, wave 1 (which throws away any save)
+function ssDeploy(cont) {
+  audioInit(); ssReset(); ssNewArm = false;
+  const sv = cont ? ssSaveGet() : null;
+  if (sv) ssResume(sv); else ssSaveClear();
   state = 'play'; card.hidden = true; hud.hidden = false;
   keepAwake(); wantLock();
-  banner(N > 1 ? 'Night ' + N : 'Zombie Shootout', 'Hold the tower till dawn', 2.4);
+  if (sv) banner('Night ' + ssNightOf(sv.next), 'Continuing from ' + (ssIsFinal(sv.next) ? 'the final wave' : 'wave ' + ssWaveIn(sv.next)), 2.6);
+  else banner('Zombie Shootout', 'Hold the tower till dawn', 2.4);
 }
 function ssToTitle() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
@@ -4411,6 +4411,7 @@ function ssToTitle() {
   ssUpgReset(); ssNightReset();
 }
 function ssStartWave(n) {
+  ssSave(n);   // closing the game mid-wave resumes from the start of this wave
   ssWave = n; ssWaveActive = true;
   const fin = ssIsFinal(n), wn = ssWaveIn(n), N = ssNightOf(n);
   if (fin) ssEvt = null; else ssPickEvent(n);   // the stand till dawn has no night event of its own
@@ -4458,6 +4459,7 @@ function ssUpdateWaves(dt) {
       if (gotN) setTimeout(() => { if (state === 'play' && mode === 'ss') popup('+' + gotN + ' grenade' + (gotN > 1 ? 's' : ''), ''); }, 1200);
       const u = SS_UNLOCKS[ssWave];
       if (u !== undefined && !ssOwned.includes(u)) { ssOwned.push(u); ssEquip(u); setTimeout(() => { if ((state === 'play' || state === 'paused') && mode === 'ss') ssShowUnlock(SNIPERS[u]); }, 1000); }
+      ssSave(ssWave + 1);
     }
   } else if (ssDayPhase !== 1) { ssInterT -= dt; if (ssInterT <= 0) ssStartWave(ssWave + 1); }
 }
@@ -4474,6 +4476,7 @@ function ssTowerHit(dmg, zb) {
   if (ssTowerHp <= 0) ssGameOver();
 }
 function ssGameOver() {
+  ssSaveClear();   // dying ends the run: next time starts again at night 1, wave 1
   state = 'over'; ssOverT = 0; releaseInputs(); adsToggle = false; ssScopeEl.style.opacity = 0; ssWheelCancel();
   ssNewBest = ssScore > ssBest.score;
   if (ssNewBest) { ssBest = { wave: ssWave, score: ssScore }; store.set('fbz-ss-best', JSON.stringify(ssBest)); }
@@ -4937,17 +4940,18 @@ function ssCardHTML(kind) {
     const controls = padActive ? '<p class="padline">' + SS_PAD_LEGEND + '</p><p class="padline">Press <b>✕</b> to start.</p>'
       : isTouch ? '<dl class="controls"><dt>Fire</dt><dd>Hold to shoot. You aim in automatically.</dd><dt>Nade</dt><dd>Hold to see the arc, let go to throw</dd><dt>Switch</dt><dd>Tap to swap, hold and drag for the weapon wheel</dd></dl>'
       : '<dl class="controls"><dt>Mouse</dt><dd>Look. Click to fire, which aims in</dd><dt>G</dt><dd>Hold to aim a grenade, let go to throw</dd><dt>Q / R</dt><dd>Switch weapon, reload</dd></dl>';
-    const nights = ssNightsOpen > 1 ? '<div class="nights" role="radiogroup" aria-label="Start at">' + Array.from({ length: ssNightsOpen }, (_, i) => i + 1).map(n =>
-      '<button type="button" class="night' + (n === ssNightPick ? ' on' : '') + '" data-night="' + n + '" role="radio" aria-checked="' + (n === ssNightPick) + '">Night ' + n + '</button>').join('') + '</div>' : '';
+    const sv = ssSaveGet();
     return '<div class="panel">' + modeTabs() + '<h1 class="title">Zombie Shootout</h1>' +
-      '<p class="lead">Hold your tower for ten waves. On the last one, hang on until sunrise burns every zombie left. Each wave makes the tower tougher and unlocks wilder guns, rockets and turrets.</p>' + controls + nights +
-      '<div class="actions"><button class="btn primary" type="button" data-act="deploy">' + (ssNightPick > 1 ? 'Start night ' + ssNightPick : 'Start') + '</button><button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button></div>' +
+      '<p class="lead">Hold your tower for ten waves. On the last one, hang on until sunrise burns every zombie left. Each wave makes the tower tougher and unlocks wilder guns, rockets and turrets.</p>' + controls +
+      (sv ? '<p class="saved">Saved run · night ' + ssNightOf(sv.next) + ', ' + (ssIsFinal(sv.next) ? 'final wave' : 'wave ' + ssWaveIn(sv.next)) + ' · ' + (sv.score | 0).toLocaleString() + ' pts</p>' : '') +
+      '<div class="actions">' + (sv ? '<button class="btn primary" type="button" data-act="continue">Continue</button><button class="btn ghost' + (ssNewArm ? ' warn' : '') + '" type="button" data-act="newgame">' + (ssNewArm ? 'Tap again to start over' : 'New game') + '</button>'
+        : '<button class="btn primary" type="button" data-act="deploy">Start</button>') + '<button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button></div>' +
       '<p class="best">' + ssBestLine() + '</p></div>';
   }
   if (kind === 'won') {
     const acc = ssStats.shots ? Math.round(ssStats.hits / ssStats.shots * 100) : 0, N = ssWonNight;
     return '<div class="panel"><p class="eyebrow">Sunrise</p><h1 class="title">Night ' + N + ' survived</h1>' +
-      '<p class="lead">The sun burned ' + ssSunKills + (ssSunKills === 1 ? ' zombie' : ' zombies') + '. Night bonus +' + ssWonBonus.toLocaleString() + '. Night ' + (N + 1) + ' is unlocked, with tougher zombies and a longer wait for dawn.</p>' +
+      '<p class="lead">The sun burned ' + ssSunKills + (ssSunKills === 1 ? ' zombie' : ' zombies') + '. Night bonus +' + ssWonBonus.toLocaleString() + '. Next up is night ' + (N + 1) + ', with tougher zombies and a longer wait for dawn.</p>' +
       '<div class="stats"><div><b>' + ssStats.kills + '</b><span>Zombies</span></div><div><b>' + ssStats.heads + '</b><span>Headshots</span></div><div><b>' + acc + '%</b><span>Accuracy</span></div><div><b>' + ssScore.toLocaleString() + '</b><span>Score</span></div></div>' +
       (ssNewBest ? '<p class="tag">New best</p>' : '') +
       '<div class="actions"><button class="btn primary" type="button" data-act="night">Start night ' + (N + 1) + '</button><button class="btn ghost" type="button" data-act="menu">Menu</button></div></div>';
@@ -6023,7 +6027,7 @@ const ssStandLen = night => Math.min(150, 90 + (night - 1) * 15);     // seconds
 let ssFinal = false, ssStandT = 0, ssStandMax = 90, ssDayPhase = 0, ssDayT = 0, ssDawnK = 0, ssDawnK0 = 0, ssTickN = -1;
 let ssSunKills = 0, ssWonNight = 0, ssWonBonus = 0, ssStarMul = 1, ssDayMul = 1;
 let ssNightsOpen = Math.max(1, Math.floor(+store.get('fbz-ss-nights', '1')) || 1);
-let ssNightPick = clamp(Math.floor(+store.get('fbz-ss-pick', '1')) || 1, 1, ssNightsOpen);
+let ssNewArm = false;   // 'New game' on the title needs a second tap when there is a saved run
 let ssSun = null, ssSunHalo = null;
 const ssBurns = [];   // fires that cling to a zombie while it burns, then sink onto the body
 const SS_SUN_H = new T.Vector2(SS_GRAVE_C.x, SS_GRAVE_C.z).normalize();   // the sun comes up behind the graveyard
@@ -6038,13 +6042,25 @@ function ssNightReset() {
   for (const b of ssBurns) { b.on = false; b.z = null; b.g.visible = false; }
   ssFinal = false; ssStandT = 0; ssDayPhase = 0; ssDayT = 0; ssDawnK = 0; ssTickN = -1; ssSunKills = 0; ssWonNight = 0; ssWonBonus = 0;
 }
-// start a run at a later night: the tower, weapons and grenades as if the earlier nights were won
-function ssSkipToNight(N) {
-  if (N <= 1) return;
-  const w0 = (N - 1) * SS_NIGHT_LEN;
-  for (let w = 1; w <= w0; w++) { ssApplyUpgrade(w, true); const u = SS_UNLOCKS[w]; if (u !== undefined && !ssOwned.includes(u)) ssOwned.push(u); }
-  ssOwned.sort((a, b) => a - b);
-  ssWave = w0; ssTowerHp = ssTowerMax; ssNadeN = SS_NADE_MAX; ssInterT = 4;
+// ---------- Saved run: written at the start of every wave, after every cleared wave and at dawn; wiped when the tower falls ----------
+const SS_SAVE_KEY = 'fbz-ss-save';
+function ssSave(next, hp) {
+  const h = hp === undefined ? ssTowerHp : hp;   // health is kept as a share of max too, so a resumed tower matches however its max is rebuilt
+  store.set(SS_SAVE_KEY, JSON.stringify({ v: 1, next, score: ssScore, stats: ssStats, hp: Math.round(h), hpf: +(h / ssTowerMax).toFixed(4), owned: ssOwned.slice(), cur: ssCur, nades: ssNadeN, t: Date.now() }));
+}
+function ssSaveClear() { store.set(SS_SAVE_KEY, ''); }
+function ssSaveGet() {
+  try { const s = JSON.parse(store.get(SS_SAVE_KEY, '') || 'null'); return s && s.v === 1 && s.next > 1 && Array.isArray(s.owned) ? s : null; } catch (e) { return null; }
+}
+// rebuild the run up to the saved wave: every tower upgrade so far (quietly), then the saved guns, health, grenades and score
+function ssResume(s) {
+  const w0 = s.next - 1;
+  for (let w = 1; w <= w0; w++) ssApplyUpgrade(w, true);
+  ssWave = w0;
+  ssOwned = s.owned.filter(i => i >= 0 && i < SNIPERS.length); if (!ssOwned.length) ssOwned = [0, 1];
+  ssCur = ssOwned.includes(s.cur) ? s.cur : ssOwned[0];
+  ssTowerHp = clamp(s.hpf > 0 ? Math.round(s.hpf * ssTowerMax) : (s.hp || ssTowerMax), 1, ssTowerMax); ssNadeN = clamp(s.nades | 0, 0, SS_NADE_MAX);
+  ssScore = s.score | 0; ssStats = Object.assign({ kills: 0, heads: 0, shots: 0, hits: 0 }, s.stats); ssInterT = 4;
 }
 function ssStandStart(n) {
   ssFinal = true; ssStandMax = ssStandT = ssStandLen(ssNightOf(n)); ssTickN = -1;
@@ -6141,7 +6157,7 @@ function ssNightWon() {
   ssWonBonus = 2500 * N; ssScore += ssWonBonus;
   ssApplyUpgrade(ssWave, true); ssNadeN = SS_NADE_MAX;
   ssNightsOpen = Math.max(ssNightsOpen, N + 1); store.set('fbz-ss-nights', String(ssNightsOpen));
-  ssNightPick = N + 1; store.set('fbz-ss-pick', String(ssNightPick));
+  ssSave(ssWave + 1, ssTowerMax);   // quitting at sunrise picks up at the next night, tower repaired
   ssNewBest = ssScore > ssBest.score;
   if (ssNewBest) { ssBest = { wave: ssWave, score: ssScore }; store.set('fbz-ss-best', JSON.stringify(ssBest)); }
   state = 'won'; ssOverT = 0; releaseInputs(); adsToggle = false; ssAdsT = ssAdsE = 0; ssScoped = false; ssScopeEl.style.opacity = 0; ssWheelCancel();
