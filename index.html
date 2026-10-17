@@ -307,6 +307,7 @@ body.mode-ss{--amber:#ffc23a}
   .controls{display:none}
   .btn{padding:12px 22px;min-height:44px}
   #unlock{top:calc(var(--st) + 5%);width:min(290px,44vw);padding:9px 12px 11px;gap:5px}
+  body.mode-ss #unlock{top:calc(var(--st) + 52px);padding:7px 12px 9px;gap:3px}   /* below the tower bar */
   #ulName{font-size:24px}
   #ulKind{font-size:12px}
   .bars{gap:4px 8px}
@@ -2977,6 +2978,9 @@ const SS_PATHS = [0.42, 1.48, 2.62, 3.66, 4.71, 5.78];   // dirt trails radiatin
 const SS_GRAVE_C = { x: -47, z: 44, a: Math.atan2(44, -47) };
 const SS_FARM_C = { x: 44, z: -48 };
 const SS_GRAVES = [], SS_OBST = [], SS_BOX = [];          // grave spots, round obstacles {x,z,r}, bullet-stopping boxes
+const SS_PERCH = [];                                       // spots a glowing raven can sit on: {x, y, z, area: farm | grave | woods}
+function ssPerch(x, y, z, area) { SS_PERCH.push({ x, y, z, area }); }
+function ssPerchIn(grp, lx, ly, lz, area) { grp.updateMatrixWorld(true); const v = grp.localToWorld(new T.Vector3(lx, ly, lz)); ssPerch(v.x, v.y, v.z, area); }
 const SS_MOON_DIR = new T.Vector3(-0.42, 0.34, -0.84).normalize();
 let ssScene = null, ssMoonLight = null, ssLantern = null, ssCrypt = null, ssTower = null, ssStarsA = null, ssStarsB = null, ssClouds = null, ssFireflies = null, ssFlyData = null, ssEnvRT = null;
 const ssFires = [], ssMists = [], ssGlows = [];
@@ -3326,7 +3330,7 @@ function ssBuildGraveyard() {
     }
   };
   fenceRun(-fx, -fz, fx, -fz); fenceRun(-fx, fz, fx, fz); fenceRun(-fx, -fz, -fx, fz); fenceRun(fx, -fz, fx, -2.3); fenceRun(fx, 2.3, fx, fz);
-  for (const [lx, lz] of [[-fx, -fz], [fx, -fz], [-fx, fz], [fx, fz], [fx, -2.4], [fx, 2.4]]) { const [x, z] = W(lx, lz), y = ssH(x, z); gb.geo2(rbox(0.6, 1.9, 0.6, 0.08, 1), mat4(x, y + 0.95, z, 0, ang, 0), stoneC[0], PB.conc); gb.geo2(sphG(8, 6), mat4(x, y + 2.05, z, 0, 0, 0, 0.26, 0.26, 0.26), stoneC[2], PB.conc); }
+  for (const [lx, lz] of [[-fx, -fz], [fx, -fz], [-fx, fz], [fx, fz], [fx, -2.4], [fx, 2.4]]) { const [x, z] = W(lx, lz), y = ssH(x, z); gb.geo2(rbox(0.6, 1.9, 0.6, 0.08, 1), mat4(x, y + 0.95, z, 0, ang, 0), stoneC[0], PB.conc); gb.geo2(sphG(8, 6), mat4(x, y + 2.05, z, 0, 0, 0, 0.26, 0.26, 0.26), stoneC[2], PB.conc); ssPerch(x, y + 2.31, z, 'grave'); }
   // tombstones in rough rows, each with a mound zombies claw out of
   for (let row = 0; row < 4; row++) for (let col = 0; col < 7; col++) {
     if (SR() < 0.12) continue;
@@ -3355,6 +3359,7 @@ function ssBuildGraveyard() {
   cg.geo2(BOX1, mat4(1.9, 1.6, 0, 0, 0, 0, 0.06, 2.3, 1.38), COLS(0x1a1426), PB.dark);
   const crypt = new T.Group(); crypt.position.set(cx, cy, cz); crypt.rotation.y = -ang; ssScene.add(crypt);
   ssMesh(cg, SSM.pbr, true, true, crypt);
+  ssPerchIn(crypt, 1.95, 5.46, 0, 'grave'); ssPerchIn(crypt, -2.2, 5.46, 0, 'grave');
   const gp = new T.Vector3(2.3, 1.6, 0).applyAxisAngle(_up, -ang).add(crypt.position);
   ssGlowSprite(0x58ff96, 4.5, null, gp.x, gp.y, gp.z, 0.5);
   ssCrypt = new T.PointLight(COLS(0x5aff94), 2.2, 18, 2); ssCrypt.position.copy(gp); ssCrypt.position.y += 0.4; ssScene.add(ssCrypt);
@@ -3391,6 +3396,7 @@ function ssBuildFarm() {
   hg.geo2(BOX1, mat4(0, 3.15, 4.5, 0.18, 0, 0, 6.6, 0.16, 2.6), roofD, PB.paint);
   for (const x of [-2.8, -0.9, 0.9, 2.8]) hg.box(x - 0.1, 0.45, 5.15, x + 0.1, 2.95, 5.35, trim, 1, { pb: PB.paint });
   ssMesh(hg, SSM.pbr, true, true, house);
+  ssPerchIn(house, 2.8, 9.21, -0.8, 'farm');
   const wl = new T.PointLight(COLS(0xffb45a), 1.4, 12, 2); wl.position.set(0, 2.2, 5.8); house.add(wl); SS.houseLight = wl;
   SS_BOX.push({ minX: hx - 6, maxX: hx + 6, minZ: hz - 6, maxZ: hz + 6, minY: house.position.y - 1, maxY: house.position.y + 9.5 });
   SS_OBST.push({ x: hx, z: hz, r: 6.5 });
@@ -3412,6 +3418,7 @@ function ssBuildFarm() {
   bg.box(-0.9, 5.4, 7.0, 0.9, 6.9, 7.14, COLS(0xffc860), 1, { pb: [0.4, 0, 1.6] });
   for (const [a, b, c, d] of [[-1.05, 5.25, 1.05, 5.4], [-1.05, 6.9, 1.05, 7.05], [-1.05, 5.25, -0.9, 7.05], [0.9, 5.25, 1.05, 7.05]]) bg.box(a, b, 7.02, c, d, 7.18, white, 1, { pb: PB.paint });
   ssMesh(bg, SSM.pbr, true, true, barn);
+  ssPerchIn(barn, 0, 8.92, 6.6, 'farm');
   SS.barnDoor = new T.Vector3(0, 0, 8.5).applyAxisAngle(_up, barn.rotation.y).add(barn.position);
   SS_BOX.push({ minX: bx - 7.5, maxX: bx + 7.5, minZ: bz - 7.5, maxZ: bz + 7.5, minY: barn.position.y - 1, maxY: barn.position.y + 9 });
   SS_OBST.push({ x: bx, z: bz, r: 8.2 });
@@ -3420,6 +3427,7 @@ function ssBuildFarm() {
   for (let y = 1.5; y < 13; y += 2.2) gb.geo2(cylG(3.06, 3.06, 0.16, 20), mat4(sx, sy + y, sz), COLS(0x6e7894), PB.metal);
   gb.geo2(sphG(20, 10, 0, Math.PI / 2), mat4(sx, sy + 12.8, sz, 0, 0, 0, 3.05, 2.2, 3.05), COLS(0x4a5470), PB.metal);
   SS_OBST.push({ x: sx, z: sz, r: 3.4 }); SS_BOX.push({ minX: sx - 3, maxX: sx + 3, minZ: sz - 3, maxZ: sz + 3, minY: sy - 1, maxY: sy + 15 });
+  ssPerch(sx, sy + 15.0, sz, 'farm');
   // fences around the farm yard
   const post = COLS(0x7a5a3e), rail = COLS(0x9a7650);
   const fenceLine = (ax, az, bx2, bz2) => {
@@ -3431,6 +3439,7 @@ function ssBuildFarm() {
     }
   };
   fenceLine(28, -24, 62, -24); fenceLine(62, -24, 66, -58); fenceLine(30, -44, 28, -24);
+  for (const [x, z] of [[28, -24]]) ssPerch(x, ssH(x, z) + 1.27, z, 'farm');   // the far corners are hidden by the farmhouse and barn
   // hay bales
   for (const [x, z, r] of [[30, -54, 0.4], [32.2, -55.5, 0.9], [31, -52, 1.6], [12, -58, 0.2], [14, -56.5, 1.1], [36, -30, 0.5]]) {
     const y = ssH(x, z); gb.geo2(cylG(0.75, 0.75, 1.3, 16), mat4(x, y + 0.72, z, 0, r, Math.PI / 2), COLS(0xd9b04a), PB.cloth);
@@ -3461,6 +3470,7 @@ function ssBuildFarm() {
   gb.geo2(sphG(10, 8), mat4(scx, scy + 2.35, scz, 0, 0, 0, 0.26, 0.3, 0.26), COLS(0xdcc79a), PB.cloth);
   gb.geo2(cylG(0.44, 0.44, 0.04, 14), mat4(scx, scy + 2.55, scz), COLS(0xc9a24a), PB.cloth);
   gb.geo2(cylG(0.16, 0.24, 0.32, 12), mat4(scx, scy + 2.7, scz), COLS(0xc9a24a), PB.cloth);
+  ssPerch(scx, scy + 2.87, scz, 'farm'); ssPerch(scx + Math.cos(fa) * 0.82, scy + 2.06, scz - Math.sin(fa) * 0.82, 'farm'); ssPerch(31, ssH(31, -52) + 1.47, -52, 'farm');
   ssMesh(gb, SSM.pbr, true, true);
 }
 
@@ -3504,6 +3514,10 @@ function ssBuildTrees() {
     D.push([x, ssH(x, z) - 0.1, z, srr(0.9, 1.5), srr(0, TAU)]); SS_OBST.push({ x, z, r: 0.5 });
   }
   ssInstanced(pine.geo(), P, true); ssInstanced(round.geo(), Rn, true); ssInstanced(dead.geo(), D, true);
+  // raven perches: the fork of a dead tree's big branch, and the tips of the nearer pines
+  const bx2 = Math.cos(2.4) * 1.3, bz2 = Math.sin(2.4) * 1.3;
+  for (const [x, y, z, s, ry] of D.slice(0, 6)) ssPerch(x + s * (bx2 * Math.cos(ry) + bz2 * Math.sin(ry)), y + s * 3.94, z + s * (-bx2 * Math.sin(ry) + bz2 * Math.cos(ry)), 'grave');
+  P.filter(q => Math.hypot(q[0], q[2]) < 100).slice(0, 8).forEach(([x, y, z, s, , sy]) => ssPerch(x, y + 7.22 * s * sy, z, 'woods'));
   // rocks: lumpy boulders with mossy tops
   const rg = new T.IcosahedronGeometry(1, 1), rp = rg.attributes.position;
   for (let i = 0; i < rp.count; i++) { const k = 1 + (NZ(rp.getX(i) * 2 + 9, rp.getZ(i) * 2 + rp.getY(i) * 3, 64) - 0.5) * 0.45; rp.setXYZ(i, rp.getX(i) * k, rp.getY(i) * k * 0.75, rp.getZ(i) * k); }
@@ -3928,9 +3942,11 @@ const SNIPERS = [
   { id: 'arc', name: 'Arc Viper', rarity: 'Rare', tier: 2, color: 0x3cb8ff, dmg: 130, headMul: 2.4, rate: 0.72, mag: 6, reload: 2.1, zoom: 5, beam: 'arc', chain: 3, chainMul: 0.6, kind: 'Chain-lightning sniper', adsTime: 0.22 },
   { id: 'rail', name: 'Void Rail', rarity: 'Epic', tier: 3, color: 0xbd62ff, dmg: 300, headMul: 2.2, rate: 1.15, mag: 4, reload: 2.5, zoom: 6, beam: 'rail', pierce: true, charge: 0.24, kind: 'Piercing railgun', adsTime: 0.24 },
   { id: 'rocket', name: 'Grave Buster', rarity: 'Epic', tier: 3, color: 0xff7a2a, dmg: 380, headMul: 1, rate: 0.85, mag: 2, reload: 2.4, zoom: 1.4, beam: 'rocket', kind: 'Rocket launcher', adsTime: 0.18, holo: true, rocket: { R: 7, v0: 30, v1: 80 } },
-  { id: 'nova', name: 'Solar Lance', rarity: 'Legendary', tier: 4, color: 0xffb02e, dmg: 300, headMul: 2.0, rate: 0.95, mag: 4, reload: 2.4, zoom: 5.5, beam: 'nova', splash: 5.5, splashDmg: 240, kind: 'Plasma sniper', adsTime: 0.24 }
+  { id: 'nova', name: 'Solar Lance', rarity: 'Legendary', tier: 4, color: 0xffb02e, dmg: 300, headMul: 2.0, rate: 0.95, mag: 4, reload: 2.4, zoom: 5.5, beam: 'nova', splash: 5.5, splashDmg: 240, kind: 'Plasma sniper', adsTime: 0.24 },
+  // secret: earned by shooting the night's three glowing ravens. Each bolt becomes a spirit raven that hunts down up to three zombies
+  { id: 'raven', name: "Raven's Call", rarity: 'Mythic', tier: 5, color: 0xc28cff, dmg: 210, headMul: 1, rate: 0.5, mag: 6, reload: 2.2, zoom: 1.6, beam: 'raven', kind: 'Spirit crossbow', short: 'Raven', adsTime: 0.16, holo: true, secret: true, spirit: { hits: 3, speed: 58, hop: 16 } }
 ];
-const RARITY_HEX = ['#c8ced8', '#5ce06a', '#3ab4ff', '#c46bff', '#ffb53a'];
+const RARITY_HEX = ['#c8ced8', '#5ce06a', '#3ab4ff', '#c46bff', '#ffb53a', '#ff6ad5'];
 let ssGunScene = null, ssGunCam = null, ssGunPivot = null, ssGunFlash = null, SSGUN_MAT = null, SSGLOW_MAT = null;
 
 // ---------- Viewmodels ----------
@@ -4182,7 +4198,7 @@ function ssGunSetup() {
   SSGLOW_MAT = new T.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
   const keep = [C.glove, C.sleeve, C.cuff];
   C.glove = COLS(0x2b2d38); C.sleeve = COLS(0x3a6cc4); C.cuff = COLS(0xf0a22e);
-  const builders = [buildOwl, buildHowler, buildPulse, buildArc, buildRail, buildRocket, buildNova];
+  const builders = [buildOwl, buildHowler, buildPulse, buildArc, buildRail, buildRocket, buildNova, buildRaven];
   SNIPERS.forEach((d, i) => { d.rig = builders[i](); if (d.rig.parts.mag) d.rig.magRest = d.rig.parts.mag.position.clone(); });
   [C.glove, C.sleeve, C.cuff] = keep;
 }
@@ -4355,7 +4371,7 @@ Object.assign(SFX, {
 const SS_EXPOSURE = 1.05, SS_TOWER_MAX = 1000;
 const SS_UNLOCKS = { 1: 2, 3: 3, 4: 4, 5: 5, 7: 6 };      // wave cleared -> weapon index (0 Night Owl and 1 Storm Howler are starters; 5 is the Grave Buster)
 const SS_PAD_LEGEND = '<b>R2</b> fire · <b>L2</b> aim · <b>R1</b> grenade, hold to aim · <b>△</b> switch, hold for the weapon wheel · <b>□</b> reload · <b>Left stick</b> move on the deck · <b>Options</b> pause';
-const SS_KEYS = 'WASD move on the deck · Click fire (auto-aims) · Right-click aim · G grenade, hold to aim · Q switch, hold for the weapon wheel · 1-7 pick a weapon · R reload · Esc pause';
+const SS_KEYS = 'WASD move on the deck · Click fire (auto-aims) · Right-click aim · G grenade, hold to aim · Q switch, hold for the weapon wheel · 1-8 pick a weapon · R reload · Esc pause';
 const SS_NADE_START = 3, SS_NADE_MAX = 6;
 let ssWave = 0, ssWaveActive = false, ssQueue = [], ssSpawnT = 0, ssInterT = 0, ssMaxAlive = 12, ssScore = 0, ssTowerHp = SS_TOWER_MAX;
 let ssStats = { kills: 0, heads: 0, shots: 0, hits: 0 }, ssBest = { wave: 0, score: 0 }, ssNewBest = false;
@@ -4383,7 +4399,7 @@ function ssReset() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   ssWave = 0; ssWaveActive = false; ssQueue = []; ssInterT = 3.2; ssScore = 0; ssTowerMax = SS_TOWER_MAX; ssTowerHp = ssTowerMax; ssArmor = 0; ssTowerLv = 1; ssNewBest = false;
   ssStats = { kills: 0, heads: 0, shots: 0, hits: 0 };
-  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear(); ssNightReset();
+  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear(); ssNightReset(); ssRavensClear(); ssSpiritsClear();
   ssOwned = [0, 1]; ssCur = 0; ssAmmo = SNIPERS.map(d => d.mag); ssCd = 0; ssReloadT = 0; ssChargeT = 0; ssAdsT = ssAdsE = 0; ssScoped = false; ssSwapT = 0; ssScopeHold = 0;
   ssKick = ssRecoil = ssRecoilYaw = ssShake = ssMuzzleT = ssBoltT = ssHeat = 0; ssPx = ssPz = 0; ssLeanX = ssLeanZ = 0; ssMulti = 0; ssLastKill = -9; ssSnapT = 0; ssSnapZ = null; ssDawn = 0;
   player.yaw = Math.atan2(-SS_GRAVE_C.x, -SS_GRAVE_C.z); player.pitch = -0.16;
@@ -4398,7 +4414,7 @@ function ssReset() {
 function ssDeploy(cont) {
   audioInit(); ssReset(); ssNewArm = false;
   const sv = cont ? ssSaveGet() : null;
-  if (sv) ssResume(sv); else ssSaveClear();
+  if (sv) ssResume(sv); else { ssSaveClear(); ssRavensNight(1); }
   state = 'play'; card.hidden = true; hud.hidden = false;
   keepAwake(); wantLock();
   if (sv) banner('Night ' + ssNightOf(sv.next), 'Continuing from ' + (ssIsFinal(sv.next) ? 'the final wave' : 'wave ' + ssWaveIn(sv.next)), 2.6);
@@ -4408,9 +4424,10 @@ function ssToTitle() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   for (const d of SNIPERS) if (d.rig) d.rig.root.visible = false;
   ssTower.rotation.set(0, SS_TROT, 0); ssTower.position.set(0, 0, 0); ssScopeEl.style.opacity = 0;
-  ssUpgReset(); ssNightReset();
+  ssUpgReset(); ssNightReset(); ssRavensClear(); ssSpiritsClear();
 }
 function ssStartWave(n) {
+  ssRavensNight(ssNightOf(n));   // each night has its own three ravens
   ssSave(n);   // closing the game mid-wave resumes from the start of this wave
   ssWave = n; ssWaveActive = true;
   const fin = ssIsFinal(n), wn = ssWaveIn(n), N = ssNightOf(n);
@@ -4493,7 +4510,8 @@ function ssCycle() { if (ssOwned.length < 2 || ssSwapT > 0 || state !== 'play') 
 function ssStartReload() {
   const d = ssDef(); if (ssReloadT > 0 || ssSwapT > 0 || ssAmmo[ssCur] >= d.mag || state !== 'play') return;
   ssReloadT = d.reload; ssChargeT = 0; adsToggle = false;
-  if (d.rocket) { sfx('rocketReload'); setTimeout(() => { if (ssReloadT > 0) sfx('magIn', 'rifle'); }, d.reload * 700); }
+  if (d.spirit) sfx('spiritReload');
+  else if (d.rocket) { sfx('rocketReload'); setTimeout(() => { if (ssReloadT > 0) sfx('magIn', 'rifle'); }, d.reload * 700); }
   else if (d.id === 'owl' || d.auto) { sfx('magOut', 'rifle'); setTimeout(() => { if (ssReloadT > 0) sfx('magIn', 'rifle'); }, d.reload * 550); setTimeout(() => { if (ssReloadT > 0) sfx('bolt'); }, d.reload * 820); }
   else { sfx('magOut', 'pistol'); setTimeout(() => { if (ssReloadT > 0) sfx('energyReload'); }, d.reload * 450); }
 }
@@ -4536,6 +4554,13 @@ function ssFire() {
     if (ssAmmo[ssCur] === 0) setTimeout(() => { if (state === 'play' && mode === 'ss' && ssAmmo[ssCur] === 0) ssStartReload(); }, 450);
     return;
   }
+  if (d.spirit) {   // a spirit raven that hunts down the zombie you aimed at, then up to two more nearby
+    ssSpiritFire(d);
+    ssKick = 0.55; ssMuzzleT = 0.04; ssHeat = 1; ssRecoil += 0.016; ssRecoilYaw += rand(-0.004, 0.004);
+    sfx('raven'); rumble(0.4, 0.3, 90);
+    if (ssAmmo[ssCur] === 0) setTimeout(() => { if (state === 'play' && mode === 'ss' && ssAmmo[ssCur] === 0) ssStartReload(); }, 380);
+    return;
+  }
   camera.updateMatrixWorld(); camera.getWorldDirection(_sd);
   if (d.auto) {   // cone spread: hip-fire is loose, aiming tightens it, holding the trigger blooms it
     const s = lerp(d.spread[0], d.spread[1], ssAdsE) + ssBloom, a = rand(0, TAU), r = s * Math.sqrt(Math.random());
@@ -4560,8 +4585,11 @@ function ssFire() {
     hits.length = 0; endT = Math.min(endT, bp.distanceTo(o) - 0.05); boxHit = true;
   }
   if (crate && (!hits.length || d.pierce)) ssDropOpen(crate.drop);
-  if (hits.length) ssStats.hits++;
-  const stopT = hits.length && !d.pierce ? hits[0].t : endT;
+  let stopT = hits.length && !d.pierce ? hits[0].t : endT;
+  // a glowing raven on the line of fire (the quest): a shot stops on it unless it pierces
+  const rv = ssRavenRay(o, _sd, stopT), ravenStop = !!rv && !d.pierce;
+  if (rv) { ssRavenShot(rv.r); if (ravenStop) { stopT = rv.t; hits.length = 0; } }
+  if (hits.length || rv) ssStats.hits++;
   const end = new T.Vector3().copy(o).addScaledVector(_sd, stopT), mz = ssMuzzleWorld(new T.Vector3()), col = d.color;
   // beams
   if (d.beam === 'trace') { ssBeam([mz, end], 0xfff0c8, 0.05, 0.015, 0.16, 0, 0.9); ssSprite(mz.x, mz.y, mz.z, 0x9a9aa8, 0.15, 0.7, 0.8, _sd.x * 0.6, 0.3, _sd.z * 0.6, 0.3, 0, true); }
@@ -4578,7 +4606,7 @@ function ssFire() {
     ssShake = Math.max(ssShake, 0.22);
   } else if (d.beam === 'nova') { ssBeam([mz, end], col, 0.34, 0.1, 0.4, 0, 0.9); ssBeam([mz, end], 0xfff4dc, 0.1, 0.03, 0.3, 0, 1); }
   // world impact
-  if (!hits.length || d.pierce) {
+  if ((!hits.length || d.pierce) && !ravenStop) {
     const ep = d.pierce ? new T.Vector3().copy(o).addScaledVector(_sd, endT) : end;
     if (endT < 320 && d.auto) { ssSparks(ep.x, ep.y + 0.05, ep.z, 0xffd890, 3, 2.5); if (Math.random() < 0.5) { if (!boxHit) ssDirt(ep.x, ep.y, ep.z, 2); else ssChips(ep.x, ep.y, ep.z, 2); } }
     else if (endT < 320) { ssSparks(ep.x, ep.y + 0.05, ep.z, d.beam === 'trace' ? 0xffd890 : col, d.beam === 'trace' ? 6 : 12, 3.5); ssSprite(ep.x, ep.y + 0.1, ep.z, col, 0.5, 1.6, 0.25, 0, 0, 0, 0.8); if (!boxHit) ssDirt(ep.x, ep.y, ep.z, 5); else ssChips(ep.x, ep.y, ep.z, 5); }
@@ -4601,7 +4629,7 @@ function ssFire() {
     }
   }
   if (d.splash) {
-    ssExplode(end.x, end.y, end.z, d.splash); sfx('boom2', stopT); ssDropBlast(end.x, end.y, end.z, d.splash * 0.8);
+    ssExplode(end.x, end.y, end.z, d.splash); sfx('boom2', stopT); ssDropBlast(end.x, end.y, end.z, d.splash * 0.8); ssRavenBlast(end.x, end.y, end.z, d.splash);
     for (const z of ssZombies) {
       if (z.state === 'dead' || z.state === 'rise') continue;
       const ty = ZTYPES[z.type], dd = Math.hypot(z.x - end.x, z.y + ty.top * 0.5 - end.y, z.z - end.z); if (dd > d.splash) continue;
@@ -4666,7 +4694,7 @@ function ssWeapon(dt) {
   if (trig && ssCd <= 0 && ssReloadT <= 0 && ssSwapT <= 0) {
     if (ssAmmo[ssCur] <= 0) { ssStartReload(); return; }
     if (d.auto) ssFire();
-    else if (ssAdsE >= (d.rocket ? 0.6 : 0.85)) { if (d.charge) { ssChargeT = d.charge; sfx('railCharge'); } else ssFire(); }
+    else if (ssAdsE >= (d.rocket || d.spirit ? 0.6 : 0.85)) { if (d.charge) { ssChargeT = d.charge; sfx('railCharge'); } else ssFire(); }
   }
 }
 function ssAim(dt) {
@@ -4743,6 +4771,11 @@ function ssViewmodel(dt) {
     r.parts.war.visible = ssAmmo[ssCur] > 0 || (ssReloadT > 0 && k > 0.55);
     r.parts.war.position.z = ssReloadT > 0 && k < 0.8 ? -Math.max(0, 0.8 - k) / 0.25 * 0.3 : 0;
   }
+  if (d.spirit && r.parts.warGlow) {   // the spirit bolt fades out when loosed and re-forms before the next shot
+    const q = ssReloadT > 0 ? 1 : clamp(1 - ssCd / (d.rate * 0.85), 0, 1);
+    r.parts.war.visible = r.parts.war.visible && q > 0.25;
+    r.parts.warGlow.material.color.setScalar(0.35 + q * 0.85 + (q >= 1 ? Math.sin(time * 5) * 0.12 : 0));
+  }
   if (ssSwapT > 0) { const q = ssSwapT > 0.23 ? 1 - (ssSwapT - 0.23) / 0.23 : ssSwapT / 0.23; y -= q * 0.32; rx -= q * 0.9; }
   if (ssChargeT > 0) { x += (Math.random() - 0.5) * 0.003; y += (Math.random() - 0.5) * 0.003; }
   // bolt cycle on the Night Owl
@@ -4779,7 +4812,7 @@ function ssUpdate(dt) {
   for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
   ssSeparate();
   ssUpdateWaves(dt); ssNightUpdate(dt);
-  ssTurretsUpdate(dt); ssNadesUpdate(dt); ssRocketsUpdate(dt); ssEventsUpdate(dt);
+  ssTurretsUpdate(dt); ssNadesUpdate(dt); ssRocketsUpdate(dt); ssSpiritsUpdate(dt); ssRavensUpdate(dt); ssEventsUpdate(dt);
   ssAmbient(dt);
   ssViewmodel(dt);
   ssHud(dt);
@@ -4787,7 +4820,7 @@ function ssUpdate(dt) {
 function ssUpdateOver(dt) {
   ssOverT += dt; time += dt;
   for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
-  ssNadesUpdate(dt); ssRocketsUpdate(dt);
+  ssNadesUpdate(dt); ssRocketsUpdate(dt); ssSpiritsUpdate(dt);
   const k = clamp((ssOverT - 0.25) / 1.6, 0, 1), e = k * k;
   ssTower.rotation.set(e * 0.25, SS_TROT, e * 0.85); ssTower.position.y = -e * 2.5;
   const cr = Math.cos(SS_TROT), sr = Math.sin(SS_TROT);
@@ -4886,7 +4919,7 @@ function ssHud(dt) {
   setText(ammoRes, 'res', '/ ∞');
   const ammoCls = ssReloadT > 0 ? 'reloading' : ssAmmo[ssCur] <= 1 ? 'low' : '';
   if (hudCache.ammoCls !== ammoCls) { hudCache.ammoCls = ammoCls; ammoEl.className = ammoCls; reloadBtn.classList.toggle('urgent', ammoCls === 'low'); }
-  const nxt = ssOwned.length > 1 ? SNIPERS[ssOwned[(ssOwned.indexOf(ssCur) + 1) % ssOwned.length]].name.split(' ')[1] || '' : '';
+  const nd = ssOwned.length > 1 ? SNIPERS[ssOwned[(ssOwned.indexOf(ssCur) + 1) % ssOwned.length]] : null, nxt = nd ? nd.short || nd.name.split(' ')[1] || '' : '';
   setText(swapName, 'swap', nxt || '—');
   if (hudCache.swapOn !== (ssOwned.length > 1)) { hudCache.swapOn = ssOwned.length > 1; swapBtnEl.style.opacity = ssOwned.length > 1 ? '' : '0.4'; }
   if (hudCache.ads !== adsToggle) { hudCache.ads = adsToggle; adsBtn.classList.toggle('on', adsToggle); }
@@ -4927,8 +4960,8 @@ function modeTabs() {
 function ssArsenalHTML(interactive) {
   return '<ul class="arsenal" aria-label="Weapons">' + SNIPERS.map((d, i) => {
     const got = ssOwned.includes(i), on = i === ssCur;
-    const pick = interactive && got && !on;
-    return '<li class="' + (got ? 'got' : '') + '" style="' + (got ? 'background:' + RARITY_HEX[d.tier] + ';border-color:' + RARITY_HEX[d.tier] : 'color:' + RARITY_HEX[d.tier]) + (pick ? ';cursor:pointer' : '') + '"' + (pick ? ' data-ssequip="' + i + '" role="button" tabindex="0"' : '') + '>' + d.name + (got ? '' : ' · wave ' + Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i)) + '</li>';
+    const pick = interactive && got && !on, name = got || !d.secret || ssSecretKnown() ? d.name : '???';
+    return '<li class="' + (got ? 'got' : '') + '" style="' + (got ? 'background:' + RARITY_HEX[d.tier] + ';border-color:' + RARITY_HEX[d.tier] : 'color:' + RARITY_HEX[d.tier]) + (pick ? ';cursor:pointer' : '') + '"' + (pick ? ' data-ssequip="' + i + '" role="button" tabindex="0"' : '') + '>' + name + (got ? '' : d.secret ? ' · secret' : ' · wave ' + Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i)) + '</li>';
   }).join('') + '</ul>';
 }
 const ssBestLine = () => ssBest.score ? 'Best: night ' + ssNightOf(ssBest.wave) + ', wave ' + ssWaveIn(ssBest.wave) + ' · ' + ssBest.score.toLocaleString() + ' pts' : 'No record yet';
@@ -5383,6 +5416,7 @@ function ssNadeExplode(x, y, z, R0, dmg0) {
     zb.kx = (zb.kx || 0) + hx / hl * kb; zb.kz = (zb.kz || 0) + hz / hl * kb;
     if (zb.state !== 'dead') ssHitZombie(zb, DMG * (1 - 0.7 * (d / R) * (d / R)), false, _u5b.set(zb.x, cy + 0.3, zb.z), null, 'nade');
   }
+  ssRavenBlast(x, Math.max(y, gy), z, R);   // grenades and rockets count for the raven quest too
 }
 
 // ---------- Sounds ----------
@@ -5770,6 +5804,7 @@ function ssEventsUpdate(dt) {
     if (ssPow.dmg > 0) parts.push(['--c:#ff7a5a', '2× damage ' + Math.ceil(ssPow.dmg)]);
     if (ssPow.mag > 0) parts.push(['--c:#5ce06a', 'No reload ' + Math.ceil(ssPow.mag)]);
     if (ssPow.od > 0) parts.push(['--c:#6ff3ff', 'Overdrive ' + Math.ceil(ssPow.od)]);
+    if (ssRav && ssRav.hits > 0 && !ssRav.done && ssDayPhase === 0) parts.push(['--c:#c28cff', 'Ravens ' + ssRav.hits + '/3']);
     const key = parts.map(p => p[1]).join('|');
     if (ssChipsEl.dataset.k !== key) { ssChipsEl.dataset.k = key; ssChipsEl.innerHTML = parts.map(p => '<span class="chip" style="' + p[0] + '">' + p[1] + '</span>').join(''); }
   }
@@ -5795,7 +5830,7 @@ Object.assign(SFX, {
 // ===== Part S7: weapon wheel — hold △ (or the switch button, or Q) to bring up a radial picker; time slows while it is open =====
 const ssWheelEl = $('ssWheel'), ssWheelSvg = $('ssWheelSvg'), ssWheelName = $('ssWheelName'), ssWheelKind = $('ssWheelKind');
 const ssWheelHold = { pad: -1, key: -1, touch: -1 };     // seconds each source has been held (-1: not held)
-let ssWheelOpen = false, ssWheelSel = -1, ssWheelSrc = '', ssWheelVX = 0, ssWheelVY = 0, ssTS = 1, ssWheelBuilt = false;
+let ssWheelOpen = false, ssWheelSel = -1, ssWheelSrc = '', ssWheelVX = 0, ssWheelVY = 0, ssTS = 1, ssWheelBuilt = false, ssWheelSecret = false;
 const SS_WHEEL_HOLD = 0.22;
 
 // flat cartoon silhouettes, gun pointing right
@@ -5820,24 +5855,32 @@ function ssWheelIcon(id) {
       R(-26, -19, 22, 7, '#f2e8d2', 3) + grip('#2c2620'),
     rocket: R(-52, -9, 92, 18, '#6f7f3a', 6) + P('M-60,-12 L-50,-9 L-50,9 L-60,12 Z', '#2a2c32') + P('M40,-9 L50,-13 L50,13 L40,9 Z', '#2a2c32') +
       P('M50,-8 L62,0 L50,8 Z', '#e8432e') + R(-30, -9, 5, 18, '#ffa02a', 0) + R(14, -9, 5, 18, '#ffa02a', 0) +
-      '<circle cx="-6" cy="-18" r="5" fill="none" stroke="#ffa02a" stroke-width="2.5"/>' + R(-8, -14, 4, 5, '#2a2c32', 1) + P('M-28,9 L-20,9 L-24,21 L-32,20 Z', '#2a2c32') + P('M10,9 L17,9 L15,19 L8,19 Z', '#2a2c32')
+      '<circle cx="-6" cy="-18" r="5" fill="none" stroke="#ffa02a" stroke-width="2.5"/>' + R(-8, -14, 4, 5, '#2a2c32', 1) + P('M-28,9 L-20,9 L-24,21 L-32,20 Z', '#2a2c32') + P('M10,9 L17,9 L15,19 L8,19 Z', '#2a2c32'),
+    // Raven's Call: a crossbow seen from the side, the bow curving across the front, a glowing bolt on the deck
+    raven: P('M-60,-2 L-34,-5 L-34,8 L-48,15 L-60,13 Z', '#35244f') + R(-34, -7, 72, 12, '#1b1626', 3) + R(-30, -3.5, 64, 2.5, '#c89cff', 0) +
+      '<path d="M40,-26 Q55,0 40,26" fill="none" stroke="#120f1c" stroke-width="8.5" stroke-linecap="round"/><path d="M40,-26 Q55,0 40,26" fill="none" stroke="#35244f" stroke-width="5" stroke-linecap="round"/>' +
+      '<path d="M41,-22 Q51,0 41,22" fill="none" stroke="#c89cff" stroke-width="1.6" stroke-linecap="round"/><path d="M40,-26 L6,-3 L40,26" fill="none" stroke="#e8d8ff" stroke-width="1.6" stroke-linejoin="miter"/>' +
+      R(4, -6, 52, 3.5, '#c89cff', 1) + P('M55,-8 L64,-4.3 L55,-0.6 Z', '#ff6ad5') + P('M58,-10 L58,-16 L62,-12 Z', '#ff6ad5') + R(6, -18, 4, 10, '#1b1626', 1) +
+      '<circle cx="8" cy="-20" r="4" fill="none" stroke="#8f7bc0" stroke-width="2"/>' + P('M-12,0 L-8,-3 L-4,0 L-8,3 Z', '#c89cff') + grip('#1b1626'),
+    secret: C(0, 0, 24, '#1f1830') + '<text x="0" y="13" text-anchor="middle" font-size="38" font-weight="800" font-family="system-ui,sans-serif" fill="#ff6ad5" stroke="none">?</text>'
   };
   return '<g stroke="#120f1c" stroke-width="2.2" stroke-linejoin="round">' + s[id] + '</g>';
 }
 function ssWheelBuild() {
-  if (ssWheelBuilt) return;
-  ssWheelBuilt = true;
+  const sec = ssOwned.includes(SS_SECRET);   // the secret slot shows a ? until you have it
+  if (ssWheelBuilt && ssWheelSecret === sec) return;
+  ssWheelBuilt = true; ssWheelSecret = sec;
   const pt = (r, a) => (r * Math.cos(a)).toFixed(1) + ',' + (r * Math.sin(a)).toFixed(1), r0 = 64, r1 = 152, N = SNIPERS.length, seg = TAU / N, half = seg / 2 - 0.026;
   let h = '<circle r="' + (r1 + 6) + '" fill="rgba(10,8,20,.35)"/>';
   SNIPERS.forEach((d, i) => {
     const c = -Math.PI / 2 + i * seg, a0 = c - half, a1 = c + half, ix = Math.cos(c) * 108, iy = Math.sin(c) * 108;
-    const lock = Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i);
+    const lock = d.secret ? (sec ? '' : 'Secret') : Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i);
     h += '<g class="wseg" data-wsel="' + i + '" style="--rc:' + RARITY_HEX[d.tier] + '">' +
       '<path class="bg" d="M' + pt(r1, a0) + ' A' + r1 + ',' + r1 + ' 0 0 1 ' + pt(r1, a1) + ' L' + pt(r0, a1) + ' A' + r0 + ',' + r0 + ' 0 0 0 ' + pt(r0, a0) + ' Z"/>' +
       '<path class="rim" d="M' + pt(r1 - 3, a0 + 0.03) + ' A' + (r1 - 3) + ',' + (r1 - 3) + ' 0 0 1 ' + pt(r1 - 3, a1 - 0.03) + '"/>' +
-      '<g class="ic" transform="translate(' + ix.toFixed(1) + ' ' + iy.toFixed(1) + ') scale(' + (N > 6 ? 0.7 : 0.8) + ')">' + ssWheelIcon(d.id) + '</g>' +
+      '<g class="ic" transform="translate(' + ix.toFixed(1) + ' ' + iy.toFixed(1) + ') scale(' + (N >= 8 ? 0.64 : N > 6 ? 0.7 : 0.8) + ')">' + ssWheelIcon(d.secret && !sec ? 'secret' : d.id) + '</g>' +
       '<text class="num" x="' + (Math.cos(c) * 140).toFixed(1) + '" y="' + (Math.sin(c) * 140 + 4).toFixed(1) + '">' + (i + 1) + '</text>' +
-      (lock ? '<text class="lk" x="' + ix.toFixed(1) + '" y="' + (iy + 30).toFixed(1) + '">Wave ' + lock + '</text>' : '') + '</g>';
+      (lock ? '<text class="lk" x="' + ix.toFixed(1) + '" y="' + (iy + 30).toFixed(1) + '">' + (d.secret ? lock : 'Wave ' + lock) + '</text>' : '') + '</g>';
   });
   h += '<circle class="hub" r="' + (r0 - 6) + '"/>';
   ssWheelSvg.innerHTML = h;
@@ -5848,9 +5891,9 @@ function ssWheelRefresh() {
     g.classList.toggle('on', i === ssWheelSel); g.classList.toggle('cur', i === ssCur); g.classList.toggle('lock', !ssOwned.includes(i));
   }
   const i = ssWheelSel >= 0 ? ssWheelSel : ssCur, d = SNIPERS[i], got = ssOwned.includes(i);
-  ssWheelName.textContent = d.name; ssWheelName.style.color = got ? RARITY_HEX[d.tier] : 'var(--ink-dim)';
+  ssWheelName.textContent = got || !d.secret || ssSecretKnown() ? d.name : '???'; ssWheelName.style.color = got ? RARITY_HEX[d.tier] : 'var(--ink-dim)';
   const lock = Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i);
-  ssWheelKind.textContent = got ? d.kind + (i === ssCur ? ' · in hand' : '') : 'Unlocks after wave ' + lock;
+  ssWheelKind.textContent = got ? d.kind + (i === ssCur ? ' · in hand' : '') : d.secret ? 'Secret · silence the 3 glowing ravens in one night' : 'Unlocks after wave ' + lock;
 }
 function ssWheelShow(src) {
   if (state !== 'play' || ssWheelOpen) return;
@@ -5869,7 +5912,7 @@ function ssWheelClose(apply) {
   if (!ssWheelOpen) return;
   ssWheelOpen = false; ssWheelEl.classList.remove('open'); ssWheelEl.setAttribute('aria-hidden', 'true');
   if (!apply || ssWheelSel < 0) return;
-  if (!ssOwned.includes(ssWheelSel)) { sfx('empty'); hintMsg(SNIPERS[ssWheelSel].name + ' is still locked', 1.4); return; }
+  if (!ssOwned.includes(ssWheelSel)) { sfx('empty'); hintMsg(SNIPERS[ssWheelSel].secret ? 'Find the 3 glowing ravens to unlock it' : SNIPERS[ssWheelSel].name + ' is still locked', 1.6); return; }
   if (ssWheelSel !== ssCur) { ssEquip(ssWheelSel); sfx('wheelPick'); }
 }
 function ssWheelCancel() { ssWheelHold.pad = ssWheelHold.key = ssWheelHold.touch = -1; ssWheelClose(false); }
@@ -5887,7 +5930,7 @@ function ssWheelTick(dt) {
   if (!ssWheelOpen && ssTS > 0.995) ssTS = 1;
 }
 function ssWheelMouse(mx, my) { ssWheelVX = clamp(ssWheelVX + mx * 0.02, -1.6, 1.6); ssWheelVY = clamp(ssWheelVY + my * 0.02, -1.6, 1.6); const L = Math.hypot(ssWheelVX, ssWheelVY); if (L > 1.6) { ssWheelVX *= 1.6 / L; ssWheelVY *= 1.6 / L; } ssWheelAim(ssWheelVX, ssWheelVY, 0.5); }
-function ssPickDirect(i) { if (state !== 'play' || i >= SNIPERS.length) return; if (!ssOwned.includes(i)) { sfx('empty'); return; } ssEquip(i); }
+function ssPickDirect(i) { if (state !== 'play' || i >= SNIPERS.length) return; if (!ssOwned.includes(i)) { sfx('empty'); if (SNIPERS[i].secret) hintMsg('Find the 3 glowing ravens to unlock it', 1.6); return; } ssEquip(i); }
 
 Object.assign(SFX, {
   wheelOpen() { nz({ type: 'bandpass', f0: 600, f1: 1800, q: 1, dur: 0.16, vol: 0.12, att: 0.02 }); tn({ type: 'sine', f0: 320, f1: 160, dur: 0.3, vol: 0.06 }); },
@@ -5981,6 +6024,7 @@ function ssRocketsUpdate(dt) {
       const gt = ssRayGround(o, d, step); if (gt > 0 && (hitT < 0 || gt < hitT)) hitT = gt;
       for (const b of SS_BOX) { const q = rayBox(o, d, b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ, step); if (q && (hitT < 0 || q.t < hitT)) hitT = q.t; }
       const cr = ssDropRay(o, d, step); if (cr && (hitT < 0 || cr.t < hitT)) hitT = cr.t;
+      const rv = ssRavenRay(o, d, step); if (rv && (hitT < 0 || rv.t < hitT)) hitT = rv.t;   // a glowing raven in the way sets it off
       if (hitT >= 0 || r.t > 4 || o.y < ssH(o.x, o.z) - 0.5) { ssRocketBoom(r, _r8c.copy(o).addScaledVector(d, Math.max(0, hitT))); }
       else {
         o.addScaledVector(d, r.speed * dt);
@@ -6046,7 +6090,7 @@ function ssNightReset() {
 const SS_SAVE_KEY = 'fbz-ss-save';
 function ssSave(next, hp) {
   const h = hp === undefined ? ssTowerHp : hp;   // health is kept as a share of max too, so a resumed tower matches however its max is rebuilt
-  store.set(SS_SAVE_KEY, JSON.stringify({ v: 1, next, score: ssScore, stats: ssStats, hp: Math.round(h), hpf: +(h / ssTowerMax).toFixed(4), owned: ssOwned.slice(), cur: ssCur, nades: ssNadeN, t: Date.now() }));
+  store.set(SS_SAVE_KEY, JSON.stringify({ v: 1, next, score: ssScore, stats: ssStats, hp: Math.round(h), hpf: +(h / ssTowerMax).toFixed(4), owned: ssOwned.slice(), cur: ssCur, nades: ssNadeN, rv: ssRavenState(), t: Date.now() }));
 }
 function ssSaveClear() { store.set(SS_SAVE_KEY, ''); }
 function ssSaveGet() {
@@ -6061,6 +6105,7 @@ function ssResume(s) {
   ssCur = ssOwned.includes(s.cur) ? s.cur : ssOwned[0];
   ssTowerHp = clamp(s.hpf > 0 ? Math.round(s.hpf * ssTowerMax) : (s.hp || ssTowerMax), 1, ssTowerMax); ssNadeN = clamp(s.nades | 0, 0, SS_NADE_MAX);
   ssScore = s.score | 0; ssStats = Object.assign({ kills: 0, heads: 0, shots: 0, hits: 0 }, s.stats); ssInterT = 4;
+  const N = ssNightOf(s.next); ssRavensNight(N, s.rv && s.rv.night === N ? s.rv : null);   // the same ravens, minus any already shot tonight
 }
 function ssStandStart(n) {
   ssFinal = true; ssStandMax = ssStandT = ssStandLen(ssNightOf(n)); ssTickN = -1;
@@ -6103,7 +6148,7 @@ function ssNightUpdate(dt) {
 function ssSunrise() {
   ssFinal = false; ssDayPhase = 1; ssDayT = 0; ssDawnK0 = ssDawnK; ssSunKills = 0;
   ssQueue = []; ssWaveActive = false; ssAmbushAt = -1; ssWaveDone();
-  banner('Sunrise!', 'The light burns them all', 3.2);
+  banner('Sunrise!', 'The light burns them all', 3.2); ssRavensFlee();
   sfx('dawn'); rumble(0.5, 0.5, 700); ssShake = Math.max(ssShake, 0.12);
 }
 // catch fire: stagger about in flames for a moment before crumbling
@@ -6170,14 +6215,14 @@ function ssNextNight() {
   state = 'play'; card.hidden = true; hud.hidden = false; for (const k in hudCache) delete hudCache[k];
   ssDayPhase = 3; ssDayT = 0; ssTowerHp = ssTowerMax; ssInterT = 8.5;
   keepAwake(); wantLock();
-  banner('Night ' + (ssWonNight + 1), 'Tower repaired. Night falls again', 3);
+  banner('Night ' + (ssWonNight + 1), 'Tower repaired. Night falls again', 3); ssRavensNight(ssWonNight + 1);
   sfx('dusk');
 }
 // watching the sun come up behind the victory card
 function ssUpdateWon(dt) {
   time += dt; ssOverT += dt;
   for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
-  ssBurnsUpdate(dt);
+  ssBurnsUpdate(dt); ssSpiritsUpdate(dt);
   // turn toward the sun, keeping it to the right of the card on a wide screen
   const sy = Math.atan2(-ssSunDir.x, -ssSunDir.z) + (camera.aspect > 1.3 ? 0.42 : 0), k = Math.min(1, dt * 0.9);
   player.yaw += angDiff(sy, player.yaw) * k; player.pitch += (0.1 - player.pitch) * k;
@@ -6226,6 +6271,331 @@ Object.assign(SFX, {
   tick() { tn({ type: 'square', f0: 1250, dur: 0.05, vol: 0.05 }); },
   chime() { tn({ type: 'triangle', f0: 784, dur: 0.5, vol: 0.06 }); tn({ type: 'triangle', f0: 1175, dur: 0.7, vol: 0.05, when: 0.12 }); },
   dusk() { [220, 261.6, 329.6].forEach((f, i) => tn({ type: 'sine', f0: f, f1: f * 0.97, dur: 2.6, vol: 0.05, att: 0.7, when: i * 0.12 })); }
+});
+
+// ===== Part S10: the raven quest — three glowing ravens perch somewhere each night; shoot all three in one night for the secret Raven's Call =====
+const SS_SECRET = SNIPERS.findIndex(d => d.secret);
+const SS_RAVEN_S = 1.5;                       // perched raven scale
+const SS_SECRET_KEY = 'fbz-ss-secret';        // '1' once a player has ever found the secret weapon (the arsenal then names it)
+const ssSpirits = [];
+let ssRav = null, ssRavKit = null, ssRavLast = [], ssRavHinted = false;
+const _r10a = new T.Vector3(), _r10b = new T.Vector3(), _r10c = new T.Vector3(), _r10z = new T.Vector3(0, 0, 1);
+const ssSecretKnown = () => store.get(SS_SECRET_KEY, '') === '1';
+
+// ---------- Perched ravens: dark violet with a faint glow, magenta eyes, a pulsing halo that gives them away ----------
+function ssRavenKit() {
+  if (ssRavKit) return;
+  const body = new GB(), head = new GB(), ink = COLS(0x22183a), wing = COLS(0x4a3290), chest = COLS(0x3a2a66), leg = COLS(0x2e2a38), eye = COLS(0xff7af0);
+  body.geo2(sphG(14, 10), mat4(0, 0.27, -0.02, -0.25, 0, 0, 0.17, 0.16, 0.27), ink, [0.6, 0.1, 0.6]);
+  body.geo2(sphG(12, 8), mat4(0, 0.25, 0.1, 0, 0, 0, 0.13, 0.13, 0.14), chest, [0.6, 0.1, 1.0]);
+  for (const s of [-1, 1]) {   // folded wings: long and slim along the body, the primaries reaching back past the tail root
+    body.geo2(sphG(12, 8), mat4(s * 0.13, 0.285, -0.1, -0.28, s * 0.1, 0, 0.05, 0.11, 0.3), wing, [0.5, 0.15, 1.8]);
+    body.geo2(BOX1, mat4(s * 0.1, 0.21, -0.38, -0.42, s * 0.14, 0, 0.035, 0.05, 0.2), wing, [0.5, 0.15, 1.8]);
+  }
+  body.geo2(BOX1, mat4(0, 0.2, -0.34, -0.45, 0, 0, 0.15, 0.03, 0.26), ink, [0.6, 0.1, 0.6]);
+  for (const s of [-1, 0, 1]) body.geo2(BOX1, mat4(s * 0.045, 0.135, -0.46, -0.5, s * 0.25, 0, 0.05, 0.025, 0.1), wing, [0.5, 0.15, 1.8]);
+  for (const s of [-1, 1]) { body.geo2(cylG(0.013, 0.013, 0.15, 6), mat4(s * 0.055, 0.075, 0.03), leg, PB.dark); body.geo2(BOX1, mat4(s * 0.055, 0.008, 0.06, 0, 0, 0, 0.03, 0.016, 0.09), leg, PB.dark); }
+  head.geo2(sphG(12, 10), mat4(0, 0.08, 0.04, 0, 0, 0, 0.12, 0.11, 0.12), ink, [0.6, 0.1, 0.6]);
+  head.geo2(sphG(10, 8), mat4(0, 0.01, 0.09, 0.3, 0, 0, 0.075, 0.06, 0.07), ink, [0.7, 0.05, 0.5]);      // shaggy throat
+  head.geo2(cylG(0, 0.045, 0.17, 8), mat4(0, 0.06, 0.2, Math.PI / 2, 0, 0), leg, [0.4, 0.3, 0.1]);
+  for (const s of [-1, 1]) head.geo2(sphG(8, 6), mat4(s * 0.085, 0.11, 0.1, 0, 0, 0, 0.03, 0.03, 0.03), eye, [0.4, 0, 4.5]);
+  ssRavKit = { body: body.geo(), head: head.geo() };
+}
+function ssRavensClear() {
+  if (ssRav) for (const r of ssRav.list) { ssScene.remove(r.g); r.halo.material.dispose(); r.core.material.dispose(); }   // the bird meshes share one geometry kit
+  ssRav = null;
+}
+// one raven on the farm, one in the graveyard, one in the woods; new spots every night (keep: the saved state of this night)
+function ssRavensNight(N, keep) {
+  if (ssRav && ssRav.night === N && !keep) return;
+  ssRavensClear();
+  if (!SS_PERCH.length) return;
+  ssRavenKit();
+  let picks = [];
+  if (keep && Array.isArray(keep.p) && keep.p.length && keep.p.every(i => SS_PERCH[i])) picks = keep.p.slice(0, 3);
+  else for (const area of ['farm', 'grave', 'woods']) {
+    const all = SS_PERCH.map((q, i) => i).filter(i => SS_PERCH[i].area === area), fresh = all.filter(i => !ssRavLast.includes(i)), pool = fresh.length ? fresh : all;
+    if (pool.length) picks.push(pool[Math.floor(Math.random() * pool.length)]);
+  }
+  ssRavLast = picks.slice();
+  ssRav = { night: N, list: [], hits: 0, done: !!(keep && keep.done), cawT: rand(12, 20) };
+  picks.forEach((pi, k) => {
+    const q = SS_PERCH[pi], alive = !(keep && Array.isArray(keep.alive) && keep.alive[k] === false);
+    const g = new T.Group(); g.position.set(q.x, q.y, q.z); g.rotation.y = Math.atan2(-q.x, -q.z) + rand(-0.5, 0.5); g.scale.setScalar(SS_RAVEN_S);
+    g.add(new T.Mesh(ssRavKit.body, SSM.pbr));
+    const head = new T.Group(); head.position.set(0, 0.38, 0.12); head.add(new T.Mesh(ssRavKit.head, SSM.pbr)); g.add(head);
+    const glow = (c, sc, op) => { const h = new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: c, blending: T.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, fog: false, opacity: op })); h.position.set(0, 0.32, 0); h.scale.setScalar(sc); g.add(h); return h; };
+    const halo = glow(0xa070ff, 2.8, 0.45), core = glow(0xe2b8ff, 0.9, 0.6);
+    g.visible = alive; ssScene.add(g);
+    ssRav.list.push({ pi, g, head, halo, core, x: q.x, y: q.y, z: q.z, cy: q.y + 0.32 * SS_RAVEN_S, alive, ph: rand(0, TAU), caw: 0, spT: rand(0, 0.5) });
+    if (!alive) ssRav.hits++;
+  });
+}
+function ssRavenState() { return ssRav ? { night: ssRav.night, p: ssRav.list.map(r => r.pi), alive: ssRav.list.map(r => r.alive), done: ssRav.done } : null; }
+// a raven shot mid-wave is kept even if the game is closed before the next save point (the rest of the save stays at the wave start)
+function ssSaveRavens() {
+  const s = ssSaveGet(); if (!s) return;
+  s.rv = ssRavenState();
+  if (ssOwned.includes(SS_SECRET) && !s.owned.includes(SS_SECRET)) s.owned.push(SS_SECRET);
+  store.set(SS_SAVE_KEY, JSON.stringify(s));
+}
+function ssRavensUpdate(dt) {
+  if (!ssRav) return;
+  for (const r of ssRav.list) {
+    if (!r.alive) continue;
+    r.caw = Math.max(0, r.caw - dt * 1.4);
+    r.g.position.y = r.y + Math.sin(time * 2.1 + r.ph) * 0.015;
+    r.head.rotation.y = Math.sin(time * 0.6 + r.ph) * 0.7;
+    r.head.rotation.x = -0.6 * Math.sin(Math.min(1, r.caw) * Math.PI);
+    const pu = Math.sin(time * 2.4 + r.ph);
+    r.halo.material.opacity = 0.43 + 0.14 * pu + r.caw * 0.5; r.core.material.opacity = 0.56 + 0.2 * pu + r.caw * 0.45;
+    r.spT -= dt; if (r.spT <= 0) { r.spT = rand(0.35, 0.6); ssSprite(r.x + rand(-0.35, 0.35), r.cy + rand(-0.2, 0.3), r.z + rand(-0.35, 0.35), 0xd0a0ff, 0.2, 0.02, rand(0.8, 1.3), 0, rand(0.3, 0.6), 0, 0.9); }   // a few motes drifting up
+  }
+  // now and then one caws: you can hear which side it is on, and its halo flares
+  if (state !== 'play' || ssDayPhase !== 0 || ssRav.done) return;
+  ssRav.cawT -= dt; if (ssRav.cawT > 0) return;
+  ssRav.cawT = rand(15, 26);
+  const live = ssRav.list.filter(r => r.alive); if (!live.length) return;
+  const r = live[Math.floor(Math.random() * live.length)], cp = camera.position; r.caw = 1;
+  _r10a.set(1, 0, 0).applyQuaternion(camera.quaternion); _r10a.y = 0; _r10a.normalize();
+  _r10b.set(r.x - cp.x, 0, r.z - cp.z).normalize();
+  sfx('caw', { d: Math.hypot(r.x - cp.x, r.cy - cp.y, r.z - cp.z), pan: _r10b.dot(_r10a) * 0.85 });
+  if (!ssRavHinted && !ssSecretKnown() && ssRav.hits === 0) { ssRavHinted = true; hintMsg('A glowing raven cawed. Shoot all 3 by dawn', 4.5); }
+}
+// the first live raven on a line of fire before maxT: { r, t }
+function ssRavenRay(o, d, maxT) {
+  if (!ssRav) return null;
+  let best = null, bt = maxT;
+  for (const r of ssRav.list) {
+    if (!r.alive) continue;
+    _r10b.set(r.x - o.x, r.cy - o.y, r.z - o.z);
+    const tc = _r10b.dot(d); if (tc < 0) continue;
+    const d2 = _r10b.lengthSq() - tc * tc, rr = 0.64; if (d2 > rr) continue;
+    const t = tc - Math.sqrt(rr - d2); if (t < bt) { bt = t; best = r; }
+  }
+  return best ? { r: best, t: bt } : null;
+}
+function ssRavenBlast(x, y, z, R) {
+  if (!ssRav) return;
+  for (const r of ssRav.list) if (r.alive && Math.hypot(r.x - x, r.cy - y, r.z - z) < R + 0.6) ssRavenShot(r);
+}
+function ssRavenShot(r) {
+  if (!r.alive || !ssRav) return;
+  r.alive = false; r.g.visible = false; ssRav.hits++;
+  const p = _r10c.set(r.x, r.cy, r.z);
+  ssSparks(p.x, p.y, p.z, 0xd8a8ff, 26, 5); ssSprite(p.x, p.y, p.z, 0xc28cff, 0.6, 4.5, 0.35, 0, 0, 0, 1);
+  for (let i = 0; i < 6; i++) ssSprite(p.x + rand(-0.5, 0.5), p.y + rand(-0.3, 0.6), p.z + rand(-0.5, 0.5), 0x3a2a5a, 0.4, rand(1.2, 2), rand(1, 1.6), rand(-1, 1), rand(-0.5, 1), rand(-1, 1), 0.7, 0, true);
+  ssSpiritGhost(p);
+  sfx('ravenDie', camera.position.distanceTo(p)); rumble(0.4, 0.4, 160);
+  if (ssRav.done) return;   // a quest finished earlier tonight: these are just ravens
+  if (ssRav.hits < 3) { popup('Glowing raven ' + ssRav.hits + ' of 3', 'gold'); if (ssRav.hits === 1) hintMsg('Find the other two before dawn', 3); }
+  else ssRavenQuestDone();
+  ssSaveRavens();
+}
+function ssRavenQuestDone() {
+  ssRav.done = true;
+  if (!ssOwned.includes(SS_SECRET)) {
+    ssOwned.push(SS_SECRET); store.set(SS_SECRET_KEY, '1'); ssEquip(SS_SECRET);
+    banner('The ravens are silenced', 'A secret weapon answers your call', 3.2); sfx('secret'); rumble(0.6, 0.6, 400);
+    for (let i = 0; i < 5; i++) { const a = player.yaw + (i - 2) * 0.55; ssSpiritGhost(_r10a.set(camera.position.x - Math.sin(a) * 3.5, camera.position.y + 1.2 + i % 2, camera.position.z - Math.cos(a) * 3.5), _r10b.set(-Math.sin(a), 0.55, -Math.cos(a))); }
+    setTimeout(() => { if ((state === 'play' || state === 'paused') && mode === 'ss') { ssShowUnlock(SNIPERS[SS_SECRET]); hintMsg('Its spirit ravens hunt down 3 zombies a shot', 4); } }, 1600);
+  } else {   // already carrying it: a bounty instead
+    const b = 3000 * ssRav.night; ssScore += b; ssNadeN = SS_NADE_MAX;
+    banner('The ravens are silenced', 'Raven bounty +' + b.toLocaleString() + ' and full grenades', 3); sfx('secret');
+  }
+}
+// at sunrise the ravens that are left take flight
+function ssRavensFlee() {
+  if (!ssRav) return;
+  let n = 0;
+  for (const r of ssRav.list) if (r.alive) { r.alive = false; r.g.visible = false; ssSpiritGhost(_r10a.set(r.x, r.cy, r.z)); n++; }
+  if (n && ssRav.hits > 0 && !ssRav.done) setTimeout(() => { if (state === 'play' && mode === 'ss') popup('The last raven' + (n > 1 ? 's' : '') + ' flew off at dawn', ''); }, 2600);
+}
+
+// ---------- Spirit ravens: Raven's Call bolts that hunt zombies, and the ghosts of shot ravens flying off ----------
+function ssSpiritSetup() {
+  if (ssSpirits.length) return;
+  const sph = new T.SphereGeometry(1, 12, 8), cone = new T.ConeGeometry(1, 1, 8);
+  for (let i = 0; i < 8; i++) {
+    const g = new T.Group(), m = new T.MeshBasicMaterial({ color: COLS(0xb889ff), transparent: true, opacity: 0.92, toneMapped: false, depthWrite: false });
+    const add = (geo, x, y, z, sx, sy, sz, rx, parent) => { const ms = new T.Mesh(geo, m); ms.position.set(x, y, z); ms.scale.set(sx, sy, sz); if (rx) ms.rotation.x = rx; (parent || g).add(ms); return ms; };
+    add(sph, 0, 0, 0, 0.13, 0.11, 0.3);
+    add(sph, 0, 0.05, 0.26, 0.1, 0.09, 0.1);
+    add(cone, 0, 0.04, 0.4, 0.035, 0.14, 0.035, Math.PI / 2);
+    add(sph, 0, 0, -0.33, 0.13, 0.02, 0.19);
+    const wings = [];
+    for (const s of [-1, 1]) { const pv = new T.Group(); pv.position.set(s * 0.08, 0.03, 0.02); g.add(pv); add(sph, s * 0.28, 0, -0.02, 0.3, 0.02, 0.15, 0, pv); add(sph, s * 0.5, 0, -0.08, 0.14, 0.015, 0.08, 0, pv); wings.push(pv); }
+    const halo = new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: 0x8a5cff, blending: T.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, opacity: 0.5 }));
+    halo.scale.setScalar(1.0); g.add(halo);
+    g.visible = false; ssScene.add(g);
+    ssSpirits.push({ g, m, wings, halo, on: false, ghost: false, p: new T.Vector3(), dir: new T.Vector3(0, 0, 1), t: 0, tt: 0, tgt: null, hits: 0, max: 3, hitSet: new Set(), fade: 0, trT: 0, dmg: 0, speed: 58, hop: 16, counted: false });
+  }
+}
+function ssSpiritsClear() { for (const s of ssSpirits) { s.on = false; s.g.visible = false; s.tgt = null; } }
+function ssSpiritTake() { ssSpiritSetup(); return ssSpirits.find(q => !q.on) || ssSpirits.reduce((a, b) => (a.t > b.t ? a : b)); }
+// the live zombie closest to an aim line from o (dir), or with no dir the one nearest to o; skip holds zombies already struck
+function ssSpiritPick(o, dir, maxAng, maxD, skip) {
+  let best = null, bs = 1e9;
+  for (const z of ssZombies) {
+    if (z.state === 'dead' || (z.state === 'rise' && z.rise < 0.5) || (skip && skip.has(z))) continue;
+    const ty = ZTYPES[z.type], sc = ty.scale || 1;
+    _r10b.set(z.x - o.x, z.y + ty.top * sc * 0.85 - o.y, z.z - o.z);
+    const dist = _r10b.length(); if (dist > maxD || dist < 0.3) continue;
+    if (dir) { const ang = Math.acos(clamp(_r10b.dot(dir) / dist, -1, 1)); if (ang > maxAng) continue; const sc2 = ang * 80 + dist * 0.04; if (sc2 < bs) { bs = sc2; best = z; } }
+    else if (dist < bs) { bs = dist; best = z; }
+  }
+  return best;
+}
+function ssSpiritFire(d) {
+  const s = ssSpiritTake();
+  camera.updateMatrixWorld(); camera.getWorldDirection(_r10a);
+  const tgt = ssSpiritPick(camera.position, _r10a, 0.3, 230, null);
+  ssMuzzleWorld(s.p); s.dir.copy(_r10a);
+  Object.assign(s, { on: true, ghost: false, fade: 0, t: 0, tt: 0, tgt, hits: 0, max: d.spirit.hits, dmg: d.dmg, speed: d.spirit.speed, hop: d.spirit.hop, counted: false, trT: 0 });
+  s.hitSet.clear(); s.g.visible = true; s.g.scale.setScalar(1.8); s.m.opacity = 0.92; s.halo.material.opacity = 0.5;
+  s.g.position.copy(s.p); s.g.quaternion.setFromUnitVectors(_r10z, s.dir);
+  ssSprite(s.p.x, s.p.y, s.p.z, 0xc28cff, 0.3, 1.4, 0.25, 0, 0, 0, 0.9);
+}
+function ssSpiritGhost(p, dir) {
+  const s = ssSpiritTake(), a = rand(0, TAU);
+  s.p.copy(p); if (dir) s.dir.copy(dir).normalize(); else s.dir.set(Math.cos(a) * 0.6, 0.8, Math.sin(a) * 0.6).normalize();
+  Object.assign(s, { on: true, ghost: true, fade: 0, t: 0, tt: 0, tgt: null, speed: 9, counted: true });
+  s.g.visible = true; s.g.scale.setScalar(SS_RAVEN_S * 1.1); s.m.opacity = 0.85; s.halo.material.opacity = 0.45;
+  s.g.position.copy(s.p); s.g.quaternion.setFromUnitVectors(_r10z, s.dir);
+}
+const ssSpiritAim = (z, out) => { const ty = ZTYPES[z.type], sc = ty.scale || 1; return out.set(z.x, z.y + ty.top * sc * 0.85, z.z); };
+function ssSpiritHit(s) {
+  const z = s.tgt, p = ssSpiritAim(z, new T.Vector3());
+  if (!s.counted) { s.counted = true; ssStats.hits++; }
+  s.hitSet.add(z); s.hits++;
+  ssSparks(p.x, p.y, p.z, 0xd8a8ff, 12, 3); ssSprite(p.x, p.y, p.z, 0xc28cff, 0.4, 1.8, 0.3, 0, 0, 0, 0.9);
+  sfx('spiritHit', camera.position.distanceTo(p));
+  ssHitZombie(z, s.dmg * ssDmgMul(), true, p, 0xc28cff);
+  s.tgt = s.hits < s.max ? ssSpiritPick(p, null, 0, s.hop, s.hitSet) : null; s.tt = 0;
+  if (!s.tgt) s.fade = 0.6;
+}
+function ssSpiritsUpdate(dt) {
+  for (const s of ssSpirits) {
+    if (!s.on) continue;
+    s.t += dt; s.tt += dt;
+    if (s.fade > 0) {   // dissolving: drift up and fade out
+      s.fade -= dt; const k = Math.max(0, s.fade / 0.6);
+      s.p.addScaledVector(s.dir, 5 * dt); s.p.y += 2.5 * dt;
+      s.m.opacity = 0.92 * k; s.halo.material.opacity = 0.5 * k;
+      if (s.fade <= 0) { s.on = false; s.g.visible = false; s.tgt = null; continue; }
+    } else if (s.ghost) {   // a shot raven's spirit flapping off into the sky
+      s.p.addScaledVector(s.dir, s.speed * dt); s.dir.y += dt * 0.25; s.dir.normalize();
+      if (s.t > 1.5) s.fade = 0.6;
+    } else {
+      // lost its zombie (killed by something else): find another, nearby after a hit or ahead of it before one
+      if (s.tgt && s.tgt.state === 'dead') { s.tgt = s.hits < s.max ? ssSpiritPick(s.p, s.hits ? null : s.dir, 0.6, s.hits ? s.hop : 60, s.hitSet) : null; s.tt = 0; }
+      if (s.tgt) {
+        ssSpiritAim(s.tgt, _r10b).sub(s.p);
+        const dist = _r10b.length();
+        if (dist < 0.7 + s.speed * dt) ssSpiritHit(s);
+        else { _r10b.multiplyScalar(1 / dist); s.dir.lerp(_r10b, Math.min(1, dt * (s.t < 0.12 ? 4 : 10 + s.tt * 40))).normalize(); }   // turns harder the longer it chases, so it can't circle
+      } else if (s.hits > 0 || s.t > 1.4) s.fade = 0.6;
+      if (s.t > 6 && s.fade <= 0) s.fade = 0.6;
+      if (s.fade <= 0) {
+        const step = s.speed * dt, rv = ssRavenRay(s.p, s.dir, step + 0.4); if (rv) ssRavenShot(rv.r);
+        s.p.addScaledVector(s.dir, step);
+        if (s.p.y < ssH(s.p.x, s.p.z) + 0.1) { ssSparks(s.p.x, s.p.y + 0.1, s.p.z, 0xd8a8ff, 8, 2.5); s.fade = 0.6; }
+      }
+    }
+    // face the flight path, flap, leave a ghostly trail
+    s.g.position.copy(s.p); s.g.quaternion.setFromUnitVectors(_r10z, s.dir);
+    const f = Math.sin(s.t * (s.ghost ? 16 : 26)) * 0.75; s.wings[0].rotation.z = f; s.wings[1].rotation.z = -f;
+    s.trT -= dt; if (s.trT <= 0 && s.fade <= 0) { s.trT = s.ghost ? 0.06 : 0.03; ssSprite(s.p.x, s.p.y, s.p.z, 0xa47aff, s.ghost ? 0.45 : 0.6, 0.06, s.ghost ? 0.5 : 0.42, 0, 0.3, 0, 0.75); }
+  }
+}
+
+// ---------- Raven's Call: an obsidian crossbow with a glowing limb, a crystal front sight and a spirit bolt ----------
+function buildRaven() {
+  const rig = ssRig("Raven's Call"), p = new Painter(), g = new Painter(), bolt = new Painter();
+  const obs = COLS(0x1b1626), plum = COLS(0x35244f), silver = COLS(0x8f7bc0), glow = COLS(0xc89cff), pink = COLS(0xff6ad5);
+  const bowY = 0.036, deck = 0.058;
+  // tiller with a raised deck, a glowing bolt groove and silver side plates
+  p.rb(0.05, 0.05, 0.6, 0.012, 0, 0, -0.2, 0, 0, 0, plum, PBM.alu);
+  p.rb(0.056, 0.03, 0.5, 0.006, 0, 0.034, -0.18, 0, 0, 0, obs, PBM.alu);
+  g.bx(0.006, 0.004, 0.46, 0, 0.051, -0.2, glow);
+  for (const sx of [-1, 1]) p.rb(0.008, 0.036, 0.36, 0.003, sx * 0.028, 0, -0.14, 0, 0, 0, silver, PBM.steel);
+  p.rb(0.07, 0.06, 0.06, 0.008, 0, 0.02, -0.47, 0, 0, 0, obs, PBM.alu);     // the prod mount at the front
+  // the bow: one curved limb across the front, tips swept back toward you, a glowing edge along it
+  const BR = 0.21, arc = R => { const t = new T.TorusGeometry(BR, R, 6, 28, Math.PI * 0.7); t.rotateZ(Math.PI * 0.15); t.rotateX(-Math.PI / 2); return t; };
+  p.geo(arc(0.011), mat4(0, bowY, -0.26), obs, PBM.alu);
+  g.geo(arc(0.004), mat4(0, bowY + 0.012, -0.26), glow);
+  const tx2 = BR * Math.cos(Math.PI * 0.15), tz2 = -0.26 - BR * Math.sin(Math.PI * 0.15);
+  for (const sx of [-1, 1]) {
+    g.geo(cylG(1, 1, 1, 4), segM(sx * tx2, bowY, tz2, 0, deck - 0.002, -0.035, 0.0022), glow);   // the string, drawn back to the latch
+    p.geo(sphG(8, 6), mat4(sx * tx2, bowY, tz2, 0, 0, 0, 0.014, 0.014, 0.014), silver, PBM.steel);
+    g.geo(sphG(8, 6), mat4(sx * tx2, bowY + 0.012, tz2, 0, 0, 0, 0.005, 0.005, 0.005), pink);
+  }
+  // pink crystal front sight on a post, ring rear sight: line the crystal up in the ring
+  p.rb(0.008, 0.044, 0.008, 0.002, 0, 0.072, -0.5, 0, 0, 0, obs, PBM.alu);
+  g.geo(new T.OctahedronGeometry(1, 0), mat4(0, 0.1, -0.5, 0, 0.6, 0, 0.008, 0.014, 0.008), pink);
+  p.geo(new T.TorusGeometry(0.017, 0.0026, 8, 24), mat4(0, 0.1, 0.05), silver, PBM.steel);
+  p.rb(0.006, 0.042, 0.008, 0.002, 0, 0.065, 0.05, 0, 0, 0, obs, PBM.poly);
+  // violet gems set into both sides, grip, trigger, stock with a glowing inlay
+  for (const sx of [-1, 1]) g.geo(new T.OctahedronGeometry(1, 0), mat4(sx * 0.03, 0.0, -0.06, 0, 0, 0, 0.008, 0.02, 0.03), glow);
+  p.rb(0.032, 0.11, 0.046, 0.014, 0, -0.088, 0.06, -0.38, 0, 0, obs, PBM.poly);
+  trigger(p, 0.02, -0.05, silver);
+  p.ext([[0.1, 0.03], [0.32, 0.024], [0.4, 0.02], [0.41, -0.1], [0.37, -0.115], [0.24, -0.06], [0.1, -0.045]], 0.048, 0, plum, PBM.alu);
+  p.rb(0.052, 0.13, 0.022, 0.008, 0, -0.045, 0.41, 0, 0, 0, obs, PBM.rubber);
+  g.bx(0.052, 0.004, 0.22, 0, -0.02, 0.26, glow);
+  // the spirit bolt on the deck: gone once loosed, re-forms in a moment
+  bolt.cz(0.005, 0.005, 0.4, 0, deck, -0.235, glow, null, 8);
+  bolt.cz(0.0, 0.013, 0.05, 0, deck, -0.46, pink, null, 8);
+  for (const sx of [-1, 1]) bolt.bx(0.016, 0.002, 0.05, sx * 0.011, deck, -0.07, glow);
+  bolt.bx(0.002, 0.014, 0.05, 0, deck + 0.009, -0.07, glow);
+  ssHands(p, 0.06, -0.088, -0.38, -0.3, -0.01, 0.05, 0.05);
+  rig.muzzle.set(0, deck, -0.5); rig.hip = [0.14, -0.15, -0.36]; rig.ads = [0, 0.1, 0.24];
+  ssFinishRig(rig, p, g, [['war', null, bolt]]);
+  ssHalo(rig, 0, 0.1, -0.5, 0.05, 0xff6ad5, 0.55); ssHalo(rig, -0.032, 0, -0.06, 0.09, 0xb07cff, 0.5); ssHalo(rig, 0, deck, -0.47, 0.06, 0xc28cff, 0.45);
+  return rig;
+}
+
+// ---------- Sounds (the caw is panned toward the raven, so you can tell which side it is on) ----------
+function ssPanOut(pan) { if (!ac.createStereoPanner) return master; const n = ac.createStereoPanner(); n.pan.value = clamp(pan || 0, -1, 1); n.connect(master); return n; }
+function tnTo(o, out) {
+  const t0 = ac.currentTime + (o.when || 0), osc = ac.createOscillator(); osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(o.f0, t0);
+  if (o.f1) osc.frequency.exponentialRampToValueAtTime(o.f1, t0 + o.dur);
+  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(o.vol, t0 + (o.att || 0.004)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + o.dur);
+  osc.connect(g); g.connect(out); osc.start(t0); osc.stop(t0 + o.dur + 0.05);
+}
+function nzTo(o, out) {
+  const t0 = ac.currentTime + (o.when || 0), s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+  const f = ac.createBiquadFilter(); f.type = o.type || 'lowpass'; f.frequency.setValueAtTime(o.f0, t0); if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, t0 + o.dur); f.Q.value = o.q || 0.7;
+  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(o.vol, t0 + (o.att || 0.004)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + o.dur);
+  s.connect(f); f.connect(g); g.connect(out); s.start(t0, Math.random() * 1.5); s.stop(t0 + o.dur + 0.05);
+}
+Object.assign(SFX, {
+  caw(o) {
+    const d = (o && o.d) || 30, v = clamp(1.6 / (1 + d * 0.02), 0.1, 0.55), out = ssPanOut(o && o.pan), n = Math.random() < 0.5 ? 2 : 3;
+    for (let i = 0; i < n; i++) {
+      const p = rand(0.92, 1.06), w = i * rand(0.3, 0.36);
+      tnTo({ type: 'sawtooth', f0: 940 * p, f1: 520 * p, dur: 0.22, vol: v * 0.28, att: 0.02, when: w }, out);
+      tnTo({ type: 'square', f0: 470 * p, f1: 300 * p, dur: 0.2, vol: v * 0.06, att: 0.02, when: w }, out);
+      nzTo({ type: 'bandpass', f0: 1500 * p, f1: 850 * p, q: 3, dur: 0.22, vol: v * 0.5, att: 0.015, when: w }, out);
+    }
+  },
+  ravenDie(d) {
+    const v = clamp(1.6 / (1 + (d || 30) * 0.02), 0.12, 0.6);
+    tn({ type: 'sawtooth', f0: 1100, f1: 420, dur: 0.35, vol: v * 0.32 }); nz({ type: 'bandpass', f0: 1800, f1: 700, q: 2.5, dur: 0.3, vol: v * 0.5 });
+    for (let i = 0; i < 4; i++) nz({ type: 'bandpass', f0: rand(900, 1400), q: 1.5, dur: 0.05, vol: v * 0.3, when: 0.1 + i * 0.045 });   // a flurry of wings
+    [1320, 1760, 2350].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.5, vol: 0.05, when: 0.08 + i * 0.07 }));
+  },
+  raven() {   // loosing a spirit bolt: a whoosh, a flutter, a shimmer
+    nz({ type: 'bandpass', f0: 700, f1: 3200, q: 1.2, dur: 0.3, vol: 0.35, att: 0.02 }); tn({ type: 'triangle', f0: 660, f1: 1320, dur: 0.18, vol: 0.12 }); tn({ type: 'sine', f0: 180, f1: 90, dur: 0.18, vol: 0.25 });
+    nz({ type: 'highpass', f0: 2500, dur: 0.03, vol: 0.3 });
+    for (let i = 0; i < 3; i++) nz({ type: 'bandpass', f0: rand(900, 1300), q: 1.4, dur: 0.045, vol: 0.12, when: 0.06 + i * 0.05 });
+  },
+  spiritHit(d) { const v = clamp(1.5 / (1 + (d || 20) * 0.03), 0.1, 0.5); nz({ type: 'bandpass', f0: 2400, f1: 900, q: 1.5, dur: 0.18, vol: v * 0.6 }); tn({ type: 'triangle', f0: 1046, f1: 523, dur: 0.2, vol: v * 0.3 }); },
+  spiritReload() {   // the spirit gathers into a new bolt, then the string is drawn and clicks into the latch
+    nz({ type: 'bandpass', f0: 400, f1: 1600, q: 2, dur: 0.9, vol: 0.12, att: 0.3 });
+    [392, 523.3, 659.3].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.4, vol: 0.05, when: 0.5 + i * 0.12 }));
+    nz({ type: 'bandpass', f0: 900, f1: 500, q: 4, dur: 0.25, vol: 0.2, when: 1.45 }); tn({ type: 'square', f0: 220, f1: 140, dur: 0.06, vol: 0.06, when: 1.7 });
+  },
+  secret() { [523.3, 659.3, 784, 1046.5, 1318.5].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.6, vol: 0.07, when: i * 0.09 })); tn({ type: 'sine', f0: 130.8, dur: 1.4, vol: 0.08, att: 0.2 }); }
 });
 
 // ===== Part Z: start-up =====
