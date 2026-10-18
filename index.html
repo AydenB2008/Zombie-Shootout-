@@ -3943,8 +3943,8 @@ const SNIPERS = [
   { id: 'rail', name: 'Void Rail', rarity: 'Epic', tier: 3, color: 0xbd62ff, dmg: 300, headMul: 2.2, rate: 1.15, mag: 4, reload: 2.5, zoom: 6, beam: 'rail', pierce: true, charge: 0.24, kind: 'Piercing railgun', adsTime: 0.24 },
   { id: 'rocket', name: 'Grave Buster', rarity: 'Epic', tier: 3, color: 0xff7a2a, dmg: 380, headMul: 1, rate: 0.85, mag: 2, reload: 2.4, zoom: 1.4, beam: 'rocket', kind: 'Rocket launcher', adsTime: 0.18, holo: true, rocket: { R: 7, v0: 30, v1: 80 } },
   { id: 'nova', name: 'Solar Lance', rarity: 'Legendary', tier: 4, color: 0xffb02e, dmg: 300, headMul: 2.0, rate: 0.95, mag: 4, reload: 2.4, zoom: 5.5, beam: 'nova', splash: 5.5, splashDmg: 240, kind: 'Plasma sniper', adsTime: 0.24 },
-  // secret: earned by shooting the night's three glowing ravens. Each bolt becomes a spirit raven that hunts down up to three zombies
-  { id: 'raven', name: "Raven's Call", rarity: 'Mythic', tier: 5, color: 0xc28cff, dmg: 210, headMul: 1, rate: 0.5, mag: 6, reload: 2.2, zoom: 1.6, beam: 'raven', kind: 'Spirit crossbow', short: 'Raven', adsTime: 0.16, holo: true, secret: true, spirit: { hits: 3, speed: 58, hop: 16 } }
+  // secret: earned by shooting the night's three glowing ravens. A ray gun: glowing bolts that burst on impact and vaporise what they kill
+  { id: 'ray', name: 'Atomic Ray', rarity: 'Mythic', tier: 5, color: 0xa8ff4a, dmg: 150, headMul: 1.5, rate: 0.3, mag: 16, reload: 2.2, zoom: 1.5, beam: 'ray', kind: 'Ray gun', short: 'Ray', adsTime: 0.14, holo: true, secret: true, ray: { speed: 120, R: 3.5, splashDmg: 140 } }
 ];
 const RARITY_HEX = ['#c8ced8', '#5ce06a', '#3ab4ff', '#c46bff', '#ffb53a', '#ff6ad5'];
 let ssGunScene = null, ssGunCam = null, ssGunPivot = null, ssGunFlash = null, SSGUN_MAT = null, SSGLOW_MAT = null;
@@ -4198,7 +4198,7 @@ function ssGunSetup() {
   SSGLOW_MAT = new T.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
   const keep = [C.glove, C.sleeve, C.cuff];
   C.glove = COLS(0x2b2d38); C.sleeve = COLS(0x3a6cc4); C.cuff = COLS(0xf0a22e);
-  const builders = [buildOwl, buildHowler, buildPulse, buildArc, buildRail, buildRocket, buildNova, buildRaven];
+  const builders = [buildOwl, buildHowler, buildPulse, buildArc, buildRail, buildRocket, buildNova, buildRay];
   SNIPERS.forEach((d, i) => { d.rig = builders[i](); if (d.rig.parts.mag) d.rig.magRest = d.rig.parts.mag.position.clone(); });
   [C.glove, C.sleeve, C.cuff] = keep;
 }
@@ -4399,7 +4399,7 @@ function ssReset() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   ssWave = 0; ssWaveActive = false; ssQueue = []; ssInterT = 3.2; ssScore = 0; ssTowerMax = SS_TOWER_MAX; ssTowerHp = ssTowerMax; ssArmor = 0; ssTowerLv = 1; ssNewBest = false;
   ssStats = { kills: 0, heads: 0, shots: 0, hits: 0 };
-  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear(); ssNightReset(); ssRavensClear(); ssSpiritsClear();
+  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear(); ssNightReset(); ssRavensClear(); ssSpiritsClear(); ssBoltsClear();
   ssOwned = [0, 1]; ssCur = 0; ssAmmo = SNIPERS.map(d => d.mag); ssCd = 0; ssReloadT = 0; ssChargeT = 0; ssAdsT = ssAdsE = 0; ssScoped = false; ssSwapT = 0; ssScopeHold = 0;
   ssKick = ssRecoil = ssRecoilYaw = ssShake = ssMuzzleT = ssBoltT = ssHeat = 0; ssPx = ssPz = 0; ssLeanX = ssLeanZ = 0; ssMulti = 0; ssLastKill = -9; ssSnapT = 0; ssSnapZ = null; ssDawn = 0;
   player.yaw = Math.atan2(-SS_GRAVE_C.x, -SS_GRAVE_C.z); player.pitch = -0.16;
@@ -4424,7 +4424,7 @@ function ssToTitle() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   for (const d of SNIPERS) if (d.rig) d.rig.root.visible = false;
   ssTower.rotation.set(0, SS_TROT, 0); ssTower.position.set(0, 0, 0); ssScopeEl.style.opacity = 0;
-  ssUpgReset(); ssNightReset(); ssRavensClear(); ssSpiritsClear();
+  ssUpgReset(); ssNightReset(); ssRavensClear(); ssSpiritsClear(); ssBoltsClear();
 }
 function ssStartWave(n) {
   ssRavensNight(ssNightOf(n));   // each night has its own three ravens
@@ -4510,7 +4510,7 @@ function ssCycle() { if (ssOwned.length < 2 || ssSwapT > 0 || state !== 'play') 
 function ssStartReload() {
   const d = ssDef(); if (ssReloadT > 0 || ssSwapT > 0 || ssAmmo[ssCur] >= d.mag || state !== 'play') return;
   ssReloadT = d.reload; ssChargeT = 0; adsToggle = false;
-  if (d.spirit) sfx('spiritReload');
+  if (d.ray) sfx('rayReload');
   else if (d.rocket) { sfx('rocketReload'); setTimeout(() => { if (ssReloadT > 0) sfx('magIn', 'rifle'); }, d.reload * 700); }
   else if (d.id === 'owl' || d.auto) { sfx('magOut', 'rifle'); setTimeout(() => { if (ssReloadT > 0) sfx('magIn', 'rifle'); }, d.reload * 550); setTimeout(() => { if (ssReloadT > 0) sfx('bolt'); }, d.reload * 820); }
   else { sfx('magOut', 'pistol'); setTimeout(() => { if (ssReloadT > 0) sfx('energyReload'); }, d.reload * 450); }
@@ -4554,10 +4554,10 @@ function ssFire() {
     if (ssAmmo[ssCur] === 0) setTimeout(() => { if (state === 'play' && mode === 'ss' && ssAmmo[ssCur] === 0) ssStartReload(); }, 450);
     return;
   }
-  if (d.spirit) {   // a spirit raven that hunts down the zombie you aimed at, then up to two more nearby
-    ssSpiritFire(d);
-    ssKick = 0.55; ssMuzzleT = 0.04; ssHeat = 1; ssRecoil += 0.016; ssRecoilYaw += rand(-0.004, 0.004);
-    sfx('raven'); rumble(0.4, 0.3, 90);
+  if (d.ray) {   // the Atomic Ray: a glowing bolt that flies to the crosshair, bursts, and vaporises what it kills
+    ssRayFire(d);
+    ssKick = 0.7; ssMuzzleT = 0.05; ssHeat = 1; ssRecoil += 0.014; ssRecoilYaw += rand(-0.004, 0.004);
+    sfx('ray'); rumble(0.4, 0.25, 70);
     if (ssAmmo[ssCur] === 0) setTimeout(() => { if (state === 'play' && mode === 'ss' && ssAmmo[ssCur] === 0) ssStartReload(); }, 380);
     return;
   }
@@ -4694,7 +4694,7 @@ function ssWeapon(dt) {
   if (trig && ssCd <= 0 && ssReloadT <= 0 && ssSwapT <= 0) {
     if (ssAmmo[ssCur] <= 0) { ssStartReload(); return; }
     if (d.auto) ssFire();
-    else if (ssAdsE >= (d.rocket || d.spirit ? 0.6 : 0.85)) { if (d.charge) { ssChargeT = d.charge; sfx('railCharge'); } else ssFire(); }
+    else if (ssAdsE >= (d.rocket || d.ray ? 0.6 : 0.85)) { if (d.charge) { ssChargeT = d.charge; sfx('railCharge'); } else ssFire(); }
   }
 }
 function ssAim(dt) {
@@ -4771,11 +4771,6 @@ function ssViewmodel(dt) {
     r.parts.war.visible = ssAmmo[ssCur] > 0 || (ssReloadT > 0 && k > 0.55);
     r.parts.war.position.z = ssReloadT > 0 && k < 0.8 ? -Math.max(0, 0.8 - k) / 0.25 * 0.3 : 0;
   }
-  if (d.spirit && r.parts.warGlow) {   // the spirit bolt fades out when loosed and re-forms before the next shot
-    const q = ssReloadT > 0 ? 1 : clamp(1 - ssCd / (d.rate * 0.85), 0, 1);
-    r.parts.war.visible = r.parts.war.visible && q > 0.25;
-    r.parts.warGlow.material.color.setScalar(0.35 + q * 0.85 + (q >= 1 ? Math.sin(time * 5) * 0.12 : 0));
-  }
   if (ssSwapT > 0) { const q = ssSwapT > 0.23 ? 1 - (ssSwapT - 0.23) / 0.23 : ssSwapT / 0.23; y -= q * 0.32; rx -= q * 0.9; }
   if (ssChargeT > 0) { x += (Math.random() - 0.5) * 0.003; y += (Math.random() - 0.5) * 0.003; }
   // bolt cycle on the Night Owl
@@ -4812,7 +4807,7 @@ function ssUpdate(dt) {
   for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
   ssSeparate();
   ssUpdateWaves(dt); ssNightUpdate(dt);
-  ssTurretsUpdate(dt); ssNadesUpdate(dt); ssRocketsUpdate(dt); ssSpiritsUpdate(dt); ssRavensUpdate(dt); ssEventsUpdate(dt);
+  ssTurretsUpdate(dt); ssNadesUpdate(dt); ssRocketsUpdate(dt); ssBoltsUpdate(dt); ssSpiritsUpdate(dt); ssRavensUpdate(dt); ssEventsUpdate(dt);
   ssAmbient(dt);
   ssViewmodel(dt);
   ssHud(dt);
@@ -4820,7 +4815,7 @@ function ssUpdate(dt) {
 function ssUpdateOver(dt) {
   ssOverT += dt; time += dt;
   for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
-  ssNadesUpdate(dt); ssRocketsUpdate(dt); ssSpiritsUpdate(dt);
+  ssNadesUpdate(dt); ssRocketsUpdate(dt); ssBoltsUpdate(dt); ssSpiritsUpdate(dt);
   const k = clamp((ssOverT - 0.25) / 1.6, 0, 1), e = k * k;
   ssTower.rotation.set(e * 0.25, SS_TROT, e * 0.85); ssTower.position.y = -e * 2.5;
   const cr = Math.cos(SS_TROT), sr = Math.sin(SS_TROT);
@@ -5856,12 +5851,11 @@ function ssWheelIcon(id) {
     rocket: R(-52, -9, 92, 18, '#6f7f3a', 6) + P('M-60,-12 L-50,-9 L-50,9 L-60,12 Z', '#2a2c32') + P('M40,-9 L50,-13 L50,13 L40,9 Z', '#2a2c32') +
       P('M50,-8 L62,0 L50,8 Z', '#e8432e') + R(-30, -9, 5, 18, '#ffa02a', 0) + R(14, -9, 5, 18, '#ffa02a', 0) +
       '<circle cx="-6" cy="-18" r="5" fill="none" stroke="#ffa02a" stroke-width="2.5"/>' + R(-8, -14, 4, 5, '#2a2c32', 1) + P('M-28,9 L-20,9 L-24,21 L-32,20 Z', '#2a2c32') + P('M10,9 L17,9 L15,19 L8,19 Z', '#2a2c32'),
-    // Raven's Call: a crossbow seen from the side, the bow curving across the front, a glowing bolt on the deck
-    raven: P('M-60,-2 L-34,-5 L-34,8 L-48,15 L-60,13 Z', '#35244f') + R(-34, -7, 72, 12, '#1b1626', 3) + R(-30, -3.5, 64, 2.5, '#c89cff', 0) +
-      '<path d="M40,-26 Q55,0 40,26" fill="none" stroke="#120f1c" stroke-width="8.5" stroke-linecap="round"/><path d="M40,-26 Q55,0 40,26" fill="none" stroke="#35244f" stroke-width="5" stroke-linecap="round"/>' +
-      '<path d="M41,-22 Q51,0 41,22" fill="none" stroke="#c89cff" stroke-width="1.6" stroke-linecap="round"/><path d="M40,-26 L6,-3 L40,26" fill="none" stroke="#e8d8ff" stroke-width="1.6" stroke-linejoin="miter"/>' +
-      R(4, -6, 52, 3.5, '#c89cff', 1) + P('M55,-8 L64,-4.3 L55,-0.6 Z', '#ff6ad5') + P('M58,-10 L58,-16 L62,-12 Z', '#ff6ad5') + R(6, -18, 4, 10, '#1b1626', 1) +
-      '<circle cx="8" cy="-20" r="4" fill="none" stroke="#8f7bc0" stroke-width="2"/>' + P('M-12,0 L-8,-3 L-4,0 L-8,3 Z', '#c89cff') + grip('#1b1626'),
+    // Atomic Ray: a fifties ray gun, cream bulb, teal fins, stacked emitter discs and a glowing heart
+    ray: P('M-30,-10 L-52,-22 L-45,-22 L-16,-10 Z', '#1fb3a3') + P('M-36,6 L-54,17 L-48,18 L-28,6 Z', '#1fb3a3') + P('M-46,-6 L-60,-2.5 L-60,2.5 L-46,6 Z', '#cfd6e0') +
+      '<ellipse cx="-16" cy="-1" rx="32" ry="12" fill="#f1e4c3"/>' + R(-36, -10, 4, 18, '#cfd6e0', 1) + R(-4, -10.5, 3.5, 19, '#a8ff4a', 1) + R(14, -5, 34, 8, '#cfd6e0', 1) +
+      [[20, 26], [29, 21], [38, 16]].map(([x, h]) => R(x, -1 - h / 2, 4.5, h, '#1fb3a3', 1.5) + R(x + 3.6, -1 - h / 2, 1.3, h, '#a8ff4a', 0)).join('') +
+      P('M46,-4 L58,-11 L58,9 L46,2 Z', '#cfd6e0') + C(56, -1, 4.5, '#a8ff4a') + C(42, -11, 2.2, '#a8ff4a') + grip('#f1e4c3') + R(-13, 9, 7, 11, '#a8ff4a', 2),
     secret: C(0, 0, 24, '#1f1830') + '<text x="0" y="13" text-anchor="middle" font-size="38" font-weight="800" font-family="system-ui,sans-serif" fill="#ff6ad5" stroke="none">?</text>'
   };
   return '<g stroke="#120f1c" stroke-width="2.2" stroke-linejoin="round">' + s[id] + '</g>';
@@ -5986,7 +5980,7 @@ function ssRocketFire(d) {
   _r8b.copy(camera.position).addScaledVector(_r8a, aimT);
   ssMuzzleWorld(r.p);
   r.dir.subVectors(_r8b, r.p).normalize();
-  Object.assign(r, { on: true, fade: 0, speed: d.rocket.v0, v1: d.rocket.v1, t: 0, trT: 0, R: d.rocket.R, dmg: d.dmg });
+  Object.assign(r, { on: true, fade: 0, speed: d.rocket.v0, v1: d.rocket.v1, t: 0, trT: 0, R: d.rocket.R, dmg: d.dmg, dist: 0 });
   r.tr = [r.p.clone(), r.p.clone()];
   r.g.visible = true; r.trail.visible = true; r.trail.material.opacity = 0.8; r.g.position.copy(r.p);
   r.g.quaternion.setFromUnitVectors(_r8up, r.dir);
@@ -6020,14 +6014,14 @@ function ssRocketsUpdate(dt) {
       r.t += dt; r.speed = Math.min(r.v1, r.speed + 170 * dt);
       const step = r.speed * dt + 0.05, o = r.p, d = r.dir;
       let hitT = -1;
-      const zh = ssRayZombies(o, d, step); if (zh) hitT = zh.t;
+      const zh = ssProjZombies(o, d, step, Math.min(8, r.dist)); if (zh) hitT = Math.max(0, zh.t);   // look back a little: it may already be inside a big zombie
       const gt = ssRayGround(o, d, step); if (gt > 0 && (hitT < 0 || gt < hitT)) hitT = gt;
       for (const b of SS_BOX) { const q = rayBox(o, d, b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ, step); if (q && (hitT < 0 || q.t < hitT)) hitT = q.t; }
       const cr = ssDropRay(o, d, step); if (cr && (hitT < 0 || cr.t < hitT)) hitT = cr.t;
       const rv = ssRavenRay(o, d, step); if (rv && (hitT < 0 || rv.t < hitT)) hitT = rv.t;   // a glowing raven in the way sets it off
       if (hitT >= 0 || r.t > 4 || o.y < ssH(o.x, o.z) - 0.5) { ssRocketBoom(r, _r8c.copy(o).addScaledVector(d, Math.max(0, hitT))); }
       else {
-        o.addScaledVector(d, r.speed * dt);
+        o.addScaledVector(d, r.speed * dt); r.dist += r.speed * dt;
         // a little corkscrew wobble on the body, purely visual
         r.g.position.copy(o); r.g.quaternion.setFromUnitVectors(_r8up, d); _r8q.setFromAxisAngle(_r8up, r.t * 14); r.g.quaternion.multiply(_r8q);
         r.flame.scale.setScalar(0.3 + Math.random() * 0.25); r.glow.material.opacity = 0.75 + Math.random() * 0.25;
@@ -6222,7 +6216,7 @@ function ssNextNight() {
 function ssUpdateWon(dt) {
   time += dt; ssOverT += dt;
   for (let i = ssZombies.length - 1; i >= 0; i--) if (ssUpdateZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
-  ssBurnsUpdate(dt); ssSpiritsUpdate(dt);
+  ssBurnsUpdate(dt); ssBoltsUpdate(dt); ssSpiritsUpdate(dt);
   // turn toward the sun, keeping it to the right of the card on a wide screen
   const sy = Math.atan2(-ssSunDir.x, -ssSunDir.z) + (camera.aspect > 1.3 ? 0.42 : 0), k = Math.min(1, dt * 0.9);
   player.yaw += angDiff(sy, player.yaw) * k; player.pitch += (0.1 - player.pitch) * k;
@@ -6273,7 +6267,7 @@ Object.assign(SFX, {
   dusk() { [220, 261.6, 329.6].forEach((f, i) => tn({ type: 'sine', f0: f, f1: f * 0.97, dur: 2.6, vol: 0.05, att: 0.7, when: i * 0.12 })); }
 });
 
-// ===== Part S10: the raven quest — three glowing ravens perch somewhere each night; shoot all three in one night for the secret Raven's Call =====
+// ===== Part S10: the raven quest — three glowing ravens perch somewhere each night; shoot all three in one night for the secret Atomic Ray =====
 const SS_SECRET = SNIPERS.findIndex(d => d.secret);
 const SS_RAVEN_S = 1.5;                       // perched raven scale
 const SS_SECRET_KEY = 'fbz-ss-secret';        // '1' once a player has ever found the secret weapon (the arsenal then names it)
@@ -6398,7 +6392,7 @@ function ssRavenQuestDone() {
     ssOwned.push(SS_SECRET); store.set(SS_SECRET_KEY, '1'); ssEquip(SS_SECRET);
     banner('The ravens are silenced', 'A secret weapon answers your call', 3.2); sfx('secret'); rumble(0.6, 0.6, 400);
     for (let i = 0; i < 5; i++) { const a = player.yaw + (i - 2) * 0.55; ssSpiritGhost(_r10a.set(camera.position.x - Math.sin(a) * 3.5, camera.position.y + 1.2 + i % 2, camera.position.z - Math.cos(a) * 3.5), _r10b.set(-Math.sin(a), 0.55, -Math.cos(a))); }
-    setTimeout(() => { if ((state === 'play' || state === 'paused') && mode === 'ss') { ssShowUnlock(SNIPERS[SS_SECRET]); hintMsg('Its spirit ravens hunt down 3 zombies a shot', 4); } }, 1600);
+    setTimeout(() => { if ((state === 'play' || state === 'paused') && mode === 'ss') { ssShowUnlock(SNIPERS[SS_SECRET]); hintMsg('Its bolts blast zombies to dust', 4); } }, 1600);
   } else {   // already carrying it: a bounty instead
     const b = 3000 * ssRav.night; ssScore += b; ssNadeN = SS_NADE_MAX;
     banner('The ravens are silenced', 'Raven bounty +' + b.toLocaleString() + ' and full grenades', 3); sfx('secret');
@@ -6412,12 +6406,12 @@ function ssRavensFlee() {
   if (n && ssRav.hits > 0 && !ssRav.done) setTimeout(() => { if (state === 'play' && mode === 'ss') popup('The last raven' + (n > 1 ? 's' : '') + ' flew off at dawn', ''); }, 2600);
 }
 
-// ---------- Spirit ravens: Raven's Call bolts that hunt zombies, and the ghosts of shot ravens flying off ----------
+// ---------- Ghost ravens: the spirit of a shot raven flapping off, and the flock when the quest is done ----------
 function ssSpiritSetup() {
   if (ssSpirits.length) return;
   const sph = new T.SphereGeometry(1, 12, 8), cone = new T.ConeGeometry(1, 1, 8);
   for (let i = 0; i < 8; i++) {
-    const g = new T.Group(), m = new T.MeshBasicMaterial({ color: COLS(0xb889ff), transparent: true, opacity: 0.92, toneMapped: false, depthWrite: false });
+    const g = new T.Group(), m = new T.MeshBasicMaterial({ color: COLS(0xb889ff), transparent: true, opacity: 0.85, toneMapped: false, depthWrite: false });
     const add = (geo, x, y, z, sx, sy, sz, rx, parent) => { const ms = new T.Mesh(geo, m); ms.position.set(x, y, z); ms.scale.set(sx, sy, sz); if (rx) ms.rotation.x = rx; (parent || g).add(ms); return ms; };
     add(sph, 0, 0, 0, 0.13, 0.11, 0.3);
     add(sph, 0, 0.05, 0.26, 0.1, 0.09, 0.1);
@@ -6425,132 +6419,185 @@ function ssSpiritSetup() {
     add(sph, 0, 0, -0.33, 0.13, 0.02, 0.19);
     const wings = [];
     for (const s of [-1, 1]) { const pv = new T.Group(); pv.position.set(s * 0.08, 0.03, 0.02); g.add(pv); add(sph, s * 0.28, 0, -0.02, 0.3, 0.02, 0.15, 0, pv); add(sph, s * 0.5, 0, -0.08, 0.14, 0.015, 0.08, 0, pv); wings.push(pv); }
-    const halo = new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: 0x8a5cff, blending: T.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, opacity: 0.5 }));
-    halo.scale.setScalar(1.0); g.add(halo);
+    const halo = new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: 0x8a5cff, blending: T.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, opacity: 0.45 }));
+    g.add(halo);
     g.visible = false; ssScene.add(g);
-    ssSpirits.push({ g, m, wings, halo, on: false, ghost: false, p: new T.Vector3(), dir: new T.Vector3(0, 0, 1), t: 0, tt: 0, tgt: null, hits: 0, max: 3, hitSet: new Set(), fade: 0, trT: 0, dmg: 0, speed: 58, hop: 16, counted: false });
+    ssSpirits.push({ g, m, wings, halo, on: false, p: new T.Vector3(), dir: new T.Vector3(0, 1, 0), t: 0, fade: 0, trT: 0, speed: 9 });
   }
 }
-function ssSpiritsClear() { for (const s of ssSpirits) { s.on = false; s.g.visible = false; s.tgt = null; } }
-function ssSpiritTake() { ssSpiritSetup(); return ssSpirits.find(q => !q.on) || ssSpirits.reduce((a, b) => (a.t > b.t ? a : b)); }
-// the live zombie closest to an aim line from o (dir), or with no dir the one nearest to o; skip holds zombies already struck
-function ssSpiritPick(o, dir, maxAng, maxD, skip) {
-  let best = null, bs = 1e9;
-  for (const z of ssZombies) {
-    if (z.state === 'dead' || (z.state === 'rise' && z.rise < 0.5) || (skip && skip.has(z))) continue;
-    const ty = ZTYPES[z.type], sc = ty.scale || 1;
-    _r10b.set(z.x - o.x, z.y + ty.top * sc * 0.85 - o.y, z.z - o.z);
-    const dist = _r10b.length(); if (dist > maxD || dist < 0.3) continue;
-    if (dir) { const ang = Math.acos(clamp(_r10b.dot(dir) / dist, -1, 1)); if (ang > maxAng) continue; const sc2 = ang * 80 + dist * 0.04; if (sc2 < bs) { bs = sc2; best = z; } }
-    else if (dist < bs) { bs = dist; best = z; }
-  }
-  return best;
-}
-function ssSpiritFire(d) {
-  const s = ssSpiritTake();
-  camera.updateMatrixWorld(); camera.getWorldDirection(_r10a);
-  const tgt = ssSpiritPick(camera.position, _r10a, 0.3, 230, null);
-  ssMuzzleWorld(s.p); s.dir.copy(_r10a);
-  Object.assign(s, { on: true, ghost: false, fade: 0, t: 0, tt: 0, tgt, hits: 0, max: d.spirit.hits, dmg: d.dmg, speed: d.spirit.speed, hop: d.spirit.hop, counted: false, trT: 0 });
-  s.hitSet.clear(); s.g.visible = true; s.g.scale.setScalar(1.8); s.m.opacity = 0.92; s.halo.material.opacity = 0.5;
-  s.g.position.copy(s.p); s.g.quaternion.setFromUnitVectors(_r10z, s.dir);
-  ssSprite(s.p.x, s.p.y, s.p.z, 0xc28cff, 0.3, 1.4, 0.25, 0, 0, 0, 0.9);
-}
+function ssSpiritsClear() { for (const s of ssSpirits) { s.on = false; s.g.visible = false; } }
 function ssSpiritGhost(p, dir) {
-  const s = ssSpiritTake(), a = rand(0, TAU);
+  ssSpiritSetup();
+  const s = ssSpirits.find(q => !q.on) || ssSpirits.reduce((a, b) => (a.t > b.t ? a : b)), a = rand(0, TAU);
   s.p.copy(p); if (dir) s.dir.copy(dir).normalize(); else s.dir.set(Math.cos(a) * 0.6, 0.8, Math.sin(a) * 0.6).normalize();
-  Object.assign(s, { on: true, ghost: true, fade: 0, t: 0, tt: 0, tgt: null, speed: 9, counted: true });
+  Object.assign(s, { on: true, fade: 0, t: 0, trT: 0 });
   s.g.visible = true; s.g.scale.setScalar(SS_RAVEN_S * 1.1); s.m.opacity = 0.85; s.halo.material.opacity = 0.45;
   s.g.position.copy(s.p); s.g.quaternion.setFromUnitVectors(_r10z, s.dir);
-}
-const ssSpiritAim = (z, out) => { const ty = ZTYPES[z.type], sc = ty.scale || 1; return out.set(z.x, z.y + ty.top * sc * 0.85, z.z); };
-function ssSpiritHit(s) {
-  const z = s.tgt, p = ssSpiritAim(z, new T.Vector3());
-  if (!s.counted) { s.counted = true; ssStats.hits++; }
-  s.hitSet.add(z); s.hits++;
-  ssSparks(p.x, p.y, p.z, 0xd8a8ff, 12, 3); ssSprite(p.x, p.y, p.z, 0xc28cff, 0.4, 1.8, 0.3, 0, 0, 0, 0.9);
-  sfx('spiritHit', camera.position.distanceTo(p));
-  ssHitZombie(z, s.dmg * ssDmgMul(), true, p, 0xc28cff);
-  s.tgt = s.hits < s.max ? ssSpiritPick(p, null, 0, s.hop, s.hitSet) : null; s.tt = 0;
-  if (!s.tgt) s.fade = 0.6;
 }
 function ssSpiritsUpdate(dt) {
   for (const s of ssSpirits) {
     if (!s.on) continue;
-    s.t += dt; s.tt += dt;
+    s.t += dt;
     if (s.fade > 0) {   // dissolving: drift up and fade out
       s.fade -= dt; const k = Math.max(0, s.fade / 0.6);
       s.p.addScaledVector(s.dir, 5 * dt); s.p.y += 2.5 * dt;
-      s.m.opacity = 0.92 * k; s.halo.material.opacity = 0.5 * k;
-      if (s.fade <= 0) { s.on = false; s.g.visible = false; s.tgt = null; continue; }
-    } else if (s.ghost) {   // a shot raven's spirit flapping off into the sky
+      s.m.opacity = 0.85 * k; s.halo.material.opacity = 0.45 * k;
+      if (s.fade <= 0) { s.on = false; s.g.visible = false; continue; }
+    } else {   // flapping off into the sky
       s.p.addScaledVector(s.dir, s.speed * dt); s.dir.y += dt * 0.25; s.dir.normalize();
       if (s.t > 1.5) s.fade = 0.6;
-    } else {
-      // lost its zombie (killed by something else): find another, nearby after a hit or ahead of it before one
-      if (s.tgt && s.tgt.state === 'dead') { s.tgt = s.hits < s.max ? ssSpiritPick(s.p, s.hits ? null : s.dir, 0.6, s.hits ? s.hop : 60, s.hitSet) : null; s.tt = 0; }
-      if (s.tgt) {
-        ssSpiritAim(s.tgt, _r10b).sub(s.p);
-        const dist = _r10b.length();
-        if (dist < 0.7 + s.speed * dt) ssSpiritHit(s);
-        else { _r10b.multiplyScalar(1 / dist); s.dir.lerp(_r10b, Math.min(1, dt * (s.t < 0.12 ? 4 : 10 + s.tt * 40))).normalize(); }   // turns harder the longer it chases, so it can't circle
-      } else if (s.hits > 0 || s.t > 1.4) s.fade = 0.6;
-      if (s.t > 6 && s.fade <= 0) s.fade = 0.6;
-      if (s.fade <= 0) {
-        const step = s.speed * dt, rv = ssRavenRay(s.p, s.dir, step + 0.4); if (rv) ssRavenShot(rv.r);
-        s.p.addScaledVector(s.dir, step);
-        if (s.p.y < ssH(s.p.x, s.p.z) + 0.1) { ssSparks(s.p.x, s.p.y + 0.1, s.p.z, 0xd8a8ff, 8, 2.5); s.fade = 0.6; }
-      }
     }
-    // face the flight path, flap, leave a ghostly trail
     s.g.position.copy(s.p); s.g.quaternion.setFromUnitVectors(_r10z, s.dir);
-    const f = Math.sin(s.t * (s.ghost ? 16 : 26)) * 0.75; s.wings[0].rotation.z = f; s.wings[1].rotation.z = -f;
-    s.trT -= dt; if (s.trT <= 0 && s.fade <= 0) { s.trT = s.ghost ? 0.06 : 0.03; ssSprite(s.p.x, s.p.y, s.p.z, 0xa47aff, s.ghost ? 0.45 : 0.6, 0.06, s.ghost ? 0.5 : 0.42, 0, 0.3, 0, 0.75); }
+    const f = Math.sin(s.t * 16) * 0.75; s.wings[0].rotation.z = f; s.wings[1].rotation.z = -f;
+    s.trT -= dt; if (s.trT <= 0 && s.fade <= 0) { s.trT = 0.06; ssSprite(s.p.x, s.p.y, s.p.z, 0xa47aff, 0.45, 0.06, 0.5, 0, 0.3, 0, 0.75); }
   }
 }
 
-// ---------- Raven's Call: an obsidian crossbow with a glowing limb, a crystal front sight and a spirit bolt ----------
-function buildRaven() {
-  const rig = ssRig("Raven's Call"), p = new Painter(), g = new Painter(), bolt = new Painter();
-  const obs = COLS(0x1b1626), plum = COLS(0x35244f), silver = COLS(0x8f7bc0), glow = COLS(0xc89cff), pink = COLS(0xff6ad5);
-  const bowY = 0.036, deck = 0.058;
-  // tiller with a raised deck, a glowing bolt groove and silver side plates
-  p.rb(0.05, 0.05, 0.6, 0.012, 0, 0, -0.2, 0, 0, 0, plum, PBM.alu);
-  p.rb(0.056, 0.03, 0.5, 0.006, 0, 0.034, -0.18, 0, 0, 0, obs, PBM.alu);
-  g.bx(0.006, 0.004, 0.46, 0, 0.051, -0.2, glow);
-  for (const sx of [-1, 1]) p.rb(0.008, 0.036, 0.36, 0.003, sx * 0.028, 0, -0.14, 0, 0, 0, silver, PBM.steel);
-  p.rb(0.07, 0.06, 0.06, 0.008, 0, 0.02, -0.47, 0, 0, 0, obs, PBM.alu);     // the prod mount at the front
-  // the bow: one curved limb across the front, tips swept back toward you, a glowing edge along it
-  const BR = 0.21, arc = R => { const t = new T.TorusGeometry(BR, R, 6, 28, Math.PI * 0.7); t.rotateZ(Math.PI * 0.15); t.rotateX(-Math.PI / 2); return t; };
-  p.geo(arc(0.011), mat4(0, bowY, -0.26), obs, PBM.alu);
-  g.geo(arc(0.004), mat4(0, bowY + 0.012, -0.26), glow);
-  const tx2 = BR * Math.cos(Math.PI * 0.15), tz2 = -0.26 - BR * Math.sin(Math.PI * 0.15);
-  for (const sx of [-1, 1]) {
-    g.geo(cylG(1, 1, 1, 4), segM(sx * tx2, bowY, tz2, 0, deck - 0.002, -0.035, 0.0022), glow);   // the string, drawn back to the latch
-    p.geo(sphG(8, 6), mat4(sx * tx2, bowY, tz2, 0, 0, 0, 0.014, 0.014, 0.014), silver, PBM.steel);
-    g.geo(sphG(8, 6), mat4(sx * tx2, bowY + 0.012, tz2, 0, 0, 0, 0.005, 0.005, 0.005), pink);
+// ---------- Atomic Ray: the secret ray gun. Glowing bolts fly to the crosshair and burst; whatever they kill is vaporised ----------
+const ssBolts = [];
+const _r10y = new T.Vector3(0, 1, 0), _rbP = new T.Vector3(), _rbQ = new T.Vector3(), _rbO = new T.Vector3();
+// a projectile's per-frame hit test. ssRayZombies skips a zombie whose bounding sphere already holds the ray's start, and a fast
+// projectile often lands inside one between frames, so the test starts a little way back along the path it has flown
+function ssProjZombies(o, d, step, back) { _rbO.copy(o).addScaledVector(d, -back); const h = ssRayZombies(_rbO, d, back + step); if (h) h.t -= back; return h; }
+// proximity fuse: a bolt that skims past a zombie (within a hand's width of its body) still bursts on it
+function ssBoltNear(o, d, step) {
+  let best = null, bt = Infinity;
+  const dh = d.x * d.x + d.z * d.z;
+  for (const z of ssZombies) {
+    if (z.state === 'dead' || (z.state === 'rise' && z.rise < 0.35)) continue;
+    const ty = ZTYPES[z.type], sc = ty.scale || 1, r = ty.rad * sc + 0.42;
+    const t = clamp(dh > 1e-6 ? ((z.x - o.x) * d.x + (z.z - o.z) * d.z) / dh : 0, -1, step);
+    const px = o.x + d.x * t - z.x, pz = o.z + d.z * t - z.z, py = o.y + d.y * t;
+    if (px * px + pz * pz > r * r || py < z.y - 0.2 || py > z.y + ty.top * sc + 0.3 || t >= bt) continue;
+    bt = t; best = { z, t, head: false };
   }
-  // pink crystal front sight on a post, ring rear sight: line the crystal up in the ring
-  p.rb(0.008, 0.044, 0.008, 0.002, 0, 0.072, -0.5, 0, 0, 0, obs, PBM.alu);
-  g.geo(new T.OctahedronGeometry(1, 0), mat4(0, 0.1, -0.5, 0, 0.6, 0, 0.008, 0.014, 0.008), pink);
-  p.geo(new T.TorusGeometry(0.017, 0.0026, 8, 24), mat4(0, 0.1, 0.05), silver, PBM.steel);
-  p.rb(0.006, 0.042, 0.008, 0.002, 0, 0.065, 0.05, 0, 0, 0, obs, PBM.poly);
-  // violet gems set into both sides, grip, trigger, stock with a glowing inlay
-  for (const sx of [-1, 1]) g.geo(new T.OctahedronGeometry(1, 0), mat4(sx * 0.03, 0.0, -0.06, 0, 0, 0, 0.008, 0.02, 0.03), glow);
-  p.rb(0.032, 0.11, 0.046, 0.014, 0, -0.088, 0.06, -0.38, 0, 0, obs, PBM.poly);
-  trigger(p, 0.02, -0.05, silver);
-  p.ext([[0.1, 0.03], [0.32, 0.024], [0.4, 0.02], [0.41, -0.1], [0.37, -0.115], [0.24, -0.06], [0.1, -0.045]], 0.048, 0, plum, PBM.alu);
-  p.rb(0.052, 0.13, 0.022, 0.008, 0, -0.045, 0.41, 0, 0, 0, obs, PBM.rubber);
-  g.bx(0.052, 0.004, 0.22, 0, -0.02, 0.26, glow);
-  // the spirit bolt on the deck: gone once loosed, re-forms in a moment
-  bolt.cz(0.005, 0.005, 0.4, 0, deck, -0.235, glow, null, 8);
-  bolt.cz(0.0, 0.013, 0.05, 0, deck, -0.46, pink, null, 8);
-  for (const sx of [-1, 1]) bolt.bx(0.016, 0.002, 0.05, sx * 0.011, deck, -0.07, glow);
-  bolt.bx(0.002, 0.014, 0.05, 0, deck + 0.009, -0.07, glow);
-  ssHands(p, 0.06, -0.088, -0.38, -0.3, -0.01, 0.05, 0.05);
-  rig.muzzle.set(0, deck, -0.5); rig.hip = [0.14, -0.15, -0.36]; rig.ads = [0, 0.1, 0.24];
-  ssFinishRig(rig, p, g, [['war', null, bolt]]);
-  ssHalo(rig, 0, 0.1, -0.5, 0.05, 0xff6ad5, 0.55); ssHalo(rig, -0.032, 0, -0.06, 0.09, 0xb07cff, 0.5); ssHalo(rig, 0, deck, -0.47, 0.06, 0xc28cff, 0.45);
+  return best;
+}
+function ssBoltSetup() {
+  if (ssBolts.length) return;
+  const streakG = new T.CylinderGeometry(1, 0.3, 1, 10, 1, true); streakG.translate(0, -0.5, 0);   // a tapering streak trailing behind the bolt
+  for (let i = 0; i < 10; i++) {
+    const g = new T.Group();
+    const spr = (c, s, op) => { const q = new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: c, blending: T.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, opacity: op })); q.scale.setScalar(s); g.add(q); return q; };
+    const glow = spr(0x86ff3c, 1.4, 0.85), core = spr(0xf2ffe0, 0.45, 1);
+    const streak = new T.Mesh(streakG, new T.MeshBasicMaterial({ color: COLS(0x9dff5a), transparent: true, opacity: 0.5, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false, side: T.DoubleSide }));
+    streak.scale.set(0.08, 0.01, 0.08); g.add(streak);
+    g.visible = false; ssScene.add(g);
+    ssBolts.push({ g, glow, core, streak, on: false, p: new T.Vector3(), dir: new T.Vector3(0, 0, -1), t: 0, trT: 0, dist: 0, d: null });
+  }
+}
+function ssBoltsClear() { for (const b of ssBolts) { b.on = false; b.g.visible = false; } }
+function ssRayFire(d) {
+  ssBoltSetup();
+  const b = ssBolts.find(q => !q.on) || ssBolts.reduce((a, c) => (a.t > c.t ? a : c));
+  camera.updateMatrixWorld(); camera.getWorldDirection(_r10a);
+  if (ssAdsE < 0.85) { const s = 0.012 * (1 - ssAdsE); _r10a.x += rand(-s, s); _r10a.y += rand(-s, s); _r10a.z += rand(-s, s); _r10a.normalize(); }
+  // the bolt leaves the muzzle and flies to whatever the crosshair is on, so it lands where you aimed
+  const cp = camera.position; let aimT = 240;
+  const zh = ssRayZombies(cp, _r10a, aimT); if (zh) aimT = zh.t;
+  const gt = ssRayGround(cp, _r10a, aimT); if (gt > 0 && gt < aimT) aimT = gt;
+  const rv = ssRavenRay(cp, _r10a, aimT); if (rv) aimT = rv.t + 0.8;
+  _r10b.copy(cp).addScaledVector(_r10a, aimT);
+  ssMuzzleWorld(b.p); b.dir.subVectors(_r10b, b.p).normalize();
+  Object.assign(b, { on: true, t: 0, trT: 0, dist: 0, d });
+  b.g.visible = true; b.g.position.copy(b.p); b.g.quaternion.setFromUnitVectors(_r10y, b.dir); b.streak.scale.y = 0.01;
+  ssSprite(b.p.x, b.p.y, b.p.z, 0xc8ff8a, 0.25, 1.1, 0.16, 0, 0, 0, 0.9);
+}
+function ssBoltsUpdate(dt) {
+  for (const b of ssBolts) {
+    if (!b.on) continue;
+    b.t += dt;
+    const sp = b.d.ray.speed, step = sp * dt + 0.05, o = b.p, d = b.dir;
+    let hitT = Infinity, zh = ssProjZombies(o, d, step, Math.min(8, b.dist)) || ssBoltNear(o, d, step), crate = null, rv = null;
+    if (zh) hitT = zh.t;   // may be just behind the bolt: it had already flown into the body
+    const gt = ssRayGround(o, d, step); if (gt > 0 && gt < hitT) { hitT = gt; zh = null; }
+    for (const q of SS_BOX) { const r = rayBox(o, d, q.minX, q.minY, q.minZ, q.maxX, q.maxY, q.maxZ, step); if (r && r.t < hitT) { hitT = r.t; zh = null; } }
+    const cr = ssDropRay(o, d, step); if (cr && cr.t < hitT) { hitT = cr.t; zh = null; crate = cr; }
+    const rr = ssRavenRay(o, d, step); if (rr && rr.t < hitT) { hitT = rr.t; zh = null; crate = null; rv = rr; }
+    if (hitT < Infinity || o.y < ssH(o.x, o.z) - 0.3) { ssBoltBurst(b, _rbP.copy(o).addScaledVector(d, hitT < Infinity ? hitT : 0), zh, crate, rv); continue; }
+    if (b.t > 2.4) { b.on = false; b.g.visible = false; ssSprite(o.x, o.y, o.z, 0x9dff5a, 0.4, 1.2, 0.3, 0, 0, 0, 0.6); continue; }   // spent: fizzles out
+    o.addScaledVector(d, sp * dt); b.dist += sp * dt;
+    b.g.position.copy(o); b.streak.scale.y = Math.min(2.4, b.dist);
+    b.glow.material.opacity = 0.7 + Math.random() * 0.3; b.core.scale.setScalar(0.4 + Math.random() * 0.12);
+    b.trT -= dt; if (b.trT <= 0) { b.trT = 0.03; ssSprite(o.x, o.y, o.z, 0x86ff3c, 0.34, 0.04, 0.32, rand(-0.3, 0.3), rand(-0.3, 0.3), rand(-0.3, 0.3), 0.6); }
+  }
+}
+// the bolt bursts: a green flash and shock of light, full damage to what it struck and a splash around it
+function ssBoltBurst(b, p, zh, crate, rv) {
+  const d = b.d, R = d.ray.R;
+  b.on = false; b.g.visible = false;
+  ssSprite(p.x, p.y, p.z, 0xeaffd8, 0.5, R * 1.1, 0.2, 0, 0, 0, 1);
+  ssSprite(p.x, p.y, p.z, 0x7dff3a, 0.8, R * 2.1, 0.38, 0, 0, 0, 0.55);
+  ssSparks(p.x, p.y, p.z, 0xb8ff6a, 14, 5);
+  ssBoomLight.position.set(p.x, p.y + 1, p.z); ssBoomLight.color.set(0x8dff4a); ssBoomLight.intensity = Math.max(ssBoomLight.intensity, 5);
+  sfx('rayHit', camera.position.distanceTo(p));
+  if (crate) ssDropOpen(crate.drop);
+  if (rv) ssRavenShot(rv.r);
+  let hit = false;
+  if (zh && zh.shield) { sfx('clang', camera.position.distanceTo(p)); zh.z.flinch = Math.min(1, zh.z.flinch + 0.3); }   // a shield takes the bolt, not the splash
+  else if (zh) { hit = true; ssRayDamage(zh.z, d.dmg * (zh.head ? d.headMul : 1) * ssDmgMul(), zh.head, p); }
+  for (const z of ssZombies) {
+    if (z.state === 'dead' || (z.state === 'rise' && z.rise < 0.35) || (zh && !zh.shield && z === zh.z)) continue;
+    const ty = ZTYPES[z.type], sc = ty.scale || 1, dd = Math.hypot(z.x - p.x, z.y + ty.top * sc * 0.5 - p.y, z.z - p.z);
+    if (dd > R) continue;
+    hit = true;
+    ssRayDamage(z, d.ray.splashDmg * Math.pow(1 - dd / R, 0.6) * ssDmgMul(), false, _rbQ.set(z.x, z.y + ty.top * sc * 0.7, z.z));
+  }
+  if (hit) ssStats.hits++;
+  ssDropBlast(p.x, p.y, p.z, R * 0.8); ssRavenBlast(p.x, p.y, p.z, R);
+}
+function ssRayDamage(z, dmg, head, pos) {
+  const alive = z.state !== 'dead';
+  ssHitZombie(z, dmg, head, pos, 0x9dff5a);
+  if (alive && z.state === 'dead' && z.type !== 'boss') ssVaporize(z);
+}
+// zapped to glowing dust: a flash, sparks rising off the body, a puff of ash, and nothing left to fall over
+function ssVaporize(z) {
+  const ty = ZTYPES[z.type], sc = ty.scale || 1, h = ty.top * sc;
+  ssSprite(z.x, z.y + h * 0.5, z.z, 0xd8ffb0, 0.5 * sc, 2.4 * sc, 0.28, 0, 0, 0, 0.85);
+  for (let i = 0; i < 14; i++) ssSprite(z.x + rand(-0.3, 0.3) * sc, z.y + rand(0.1, h), z.z + rand(-0.3, 0.3) * sc, [0x9dff5a, 0xe2ffc0, 0x5aff8a][i % 3], rand(0.14, 0.28), 0.02, rand(0.5, 1.1), rand(-0.7, 0.7), rand(0.8, 2.4), rand(-0.7, 0.7), 1);
+  for (let i = 0; i < 3; i++) ssSprite(z.x + rand(-0.2, 0.2), z.y + rand(0.3, h), z.z + rand(-0.2, 0.2), 0x2e3a2c, 0.5 * sc, rand(1.4, 2) * sc, rand(1, 1.6), rand(-0.3, 0.3), rand(0.6, 1.2), rand(-0.3, 0.3), 0.45, 0, true);
+  z.m.root.visible = false; z.poofed = true; z.vapor = true; z.deadT = Math.max(z.deadT, 1.4);   // nothing left to fall over
+}
+
+// ---------- The Atomic Ray viewmodel: a fifties-style ray gun, cream and teal with silver, a glowing cell and emitter ----------
+function buildRay() {
+  const rig = ssRig('Atomic Ray'), p = new Painter(), g = new Painter(), core = new Painter(), vents = new Painter(), cell = new Painter(), cg = new Painter();
+  const cream = COLS(0xf1e4c3), teal = COLS(0x1fb3a3), silver = COLS(0xcfd6e0), glow = COLS(0xa8ff4a);
+  const by = 0.012, SY = 0.1;   // bore line, sight line (well above the body, so aiming looks over it)
+  // bulb body with silver bands and a glowing band
+  p.geo(sphG(20, 14), mat4(0, by, -0.07, 0, 0, 0, 0.04, 0.046, 0.11), cream, PBM.fde);
+  p.ring(0.041, 0.0042, 0, by, 0.0, silver, PBM.steel);
+  p.ring(0.029, 0.004, 0, by, -0.165, silver, PBM.steel);
+  g.ring(0.038, 0.0032, 0, by, -0.12, glow);
+  // tail cone, a low swept dorsal fin and two little ventral fins
+  p.cz(0.028, 0.01, 0.055, 0, by, 0.06, silver, PBM.steel, 18);
+  p.geo(sphG(10, 8), mat4(0, by, 0.09, 0, 0, 0, 0.011, 0.011, 0.011), silver, PBM.steel);
+  p.ext([[-0.06, 0.05], [0.05, 0.062], [0.078, 0.06], [0.075, 0.028], [0.02, 0.04], [-0.04, 0.048]], 0.008, 0, teal, PBM.paint);
+  for (const sx of [-1, 1]) p.ext([[0.03, 0.0], [0.085, -0.03], [0.095, -0.028], [0.08, 0.012], [0.045, 0.012]], 0.006, sx * 0.016, teal, PBM.paint);
+  // barrel, three stacked emitter discs with glowing rims, a flared emitter with a glowing heart
+  p.cz(0.014, 0.019, 0.17, 0, by, -0.255, silver, PBM.steel, 18);
+  [[-0.205, 0.034], [-0.25, 0.042], [-0.295, 0.05]].forEach(([z, r]) => { p.cz(r, r, 0.008, 0, by, z, teal, PBM.paint, 28); vents.ring(r, 0.0024, 0, by, z + 0.0045, glow); });   // growing toward the muzzle, so from behind they stack up like a glowing cone
+  p.cz(0.028, 0.012, 0.045, 0, by, -0.36, silver, PBM.steel, 22, true);
+  core.geo(sphG(12, 10), mat4(0, 0, 0, 0, 0, 0, 0.013, 0.013, 0.013), glow);
+  // sights: a ring on a post at the back, a glowing bead on a post between the discs
+  p.geo(new T.TorusGeometry(0.012, 0.0024, 8, 24), mat4(0, SY, 0.0), silver, PBM.steel);
+  p.rb(0.005, 0.042, 0.007, 0.0015, 0, SY - 0.033, 0.0, 0, 0, 0, silver, PBM.steel);
+  p.rb(0.004, 0.066, 0.005, 0.0015, 0, SY - 0.037, -0.272, 0, 0, 0, silver, PBM.steel);
+  g.geo(sphG(8, 6), mat4(0, SY, -0.272, 0, 0, 0, 0.0045, 0.0045, 0.0045), glow);
+  // grip with teal panels, trigger
+  p.rb(0.03, 0.105, 0.042, 0.014, 0, -0.07, 0.025, -0.3, 0, 0, cream, PBM.fde);
+  p.rb(0.033, 0.07, 0.03, 0.01, 0, -0.078, 0.03, -0.3, 0, 0, teal, PBM.paint);
+  trigger(p, -0.02, -0.03, silver);
+  // the energy cell under the bulb: drops out on a reload
+  cell.cy(0.014, 0.008, 0, -0.026, -0.1, silver, PBM.steel, 16);
+  cell.cy(0.014, 0.008, 0, -0.086, -0.1, silver, PBM.steel, 16);
+  cg.cy(0.0105, 0.052, 0, -0.056, -0.1, glow, null, 14);
+  handR(p, 0, -0.07, 0.03, -0.3, 1.0); handCup(p, -0.004, -0.078, 0.024, -0.3);
+  rig.muzzle.set(0, by, -0.39); rig.hip = [0.135, -0.13, -0.42]; rig.ads = [0, SY, 0.38];
+  ssFinishRig(rig, p, g, [['core', null, core], ['vents', null, vents], ['mag', cell, cg]]);
+  rig.parts.core.position.set(0, by, -0.355);   // pulses in place inside the emitter
+  ssHalo(rig, 0, by, -0.355, 0.09, 0x9dff5a, 0.65); ssHalo(rig, 0, -0.056, -0.1, 0.07, 0x9dff5a, 0.45); ssHalo(rig, 0, SY, -0.272, 0.025, 0xb8ff6a, 0.5);
   return rig;
 }
 
@@ -6584,16 +6631,26 @@ Object.assign(SFX, {
     for (let i = 0; i < 4; i++) nz({ type: 'bandpass', f0: rand(900, 1400), q: 1.5, dur: 0.05, vol: v * 0.3, when: 0.1 + i * 0.045 });   // a flurry of wings
     [1320, 1760, 2350].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.5, vol: 0.05, when: 0.08 + i * 0.07 }));
   },
-  raven() {   // loosing a spirit bolt: a whoosh, a flutter, a shimmer
-    nz({ type: 'bandpass', f0: 700, f1: 3200, q: 1.2, dur: 0.3, vol: 0.35, att: 0.02 }); tn({ type: 'triangle', f0: 660, f1: 1320, dur: 0.18, vol: 0.12 }); tn({ type: 'sine', f0: 180, f1: 90, dur: 0.18, vol: 0.25 });
-    nz({ type: 'highpass', f0: 2500, dur: 0.03, vol: 0.3 });
-    for (let i = 0; i < 3; i++) nz({ type: 'bandpass', f0: rand(900, 1300), q: 1.4, dur: 0.045, vol: 0.12, when: 0.06 + i * 0.05 });
+  ray() {   // the classic zap: two detuned falling tones, a fizz and a soft thump
+    const p = rand(0.96, 1.04);
+    tn({ type: 'square', f0: 1700 * p, f1: 210, dur: 0.2, vol: 0.09 });
+    tn({ type: 'sawtooth', f0: 1760 * p, f1: 230, dur: 0.18, vol: 0.06, when: 0.005 });
+    tn({ type: 'sine', f0: 2600 * p, f1: 500, dur: 0.14, vol: 0.08 });
+    nz({ type: 'bandpass', f0: 5200, f1: 1800, q: 2, dur: 0.1, vol: 0.16 });
+    tn({ type: 'sine', f0: 150, f1: 60, dur: 0.12, vol: 0.22 });
   },
-  spiritHit(d) { const v = clamp(1.5 / (1 + (d || 20) * 0.03), 0.1, 0.5); nz({ type: 'bandpass', f0: 2400, f1: 900, q: 1.5, dur: 0.18, vol: v * 0.6 }); tn({ type: 'triangle', f0: 1046, f1: 523, dur: 0.2, vol: v * 0.3 }); },
-  spiritReload() {   // the spirit gathers into a new bolt, then the string is drawn and clicks into the latch
-    nz({ type: 'bandpass', f0: 400, f1: 1600, q: 2, dur: 0.9, vol: 0.12, att: 0.3 });
-    [392, 523.3, 659.3].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.4, vol: 0.05, when: 0.5 + i * 0.12 }));
-    nz({ type: 'bandpass', f0: 900, f1: 500, q: 4, dur: 0.25, vol: 0.2, when: 1.45 }); tn({ type: 'square', f0: 220, f1: 140, dur: 0.06, vol: 0.06, when: 1.7 });
+  rayHit(d) {   // a crackling burst of energy
+    const v = clamp(1.8 / (1 + (d || 30) * 0.03), 0.1, 0.7);
+    nz({ type: 'bandpass', f0: 2600, f1: 500, q: 1.1, dur: 0.35, vol: v * 0.7 });
+    tn({ type: 'square', f0: 700, f1: 80, dur: 0.28, vol: v * 0.12 });
+    tn({ type: 'sine', f0: 120, f1: 45, dur: 0.3, vol: v * 0.5 });
+    for (let i = 0; i < 4; i++) nz({ type: 'highpass', f0: rand(4000, 7000), dur: 0.03, vol: v * 0.25, when: 0.05 + i * rand(0.03, 0.06) });
+  },
+  rayReload() {   // the spent cell pops out, a fresh one hums up to full charge
+    nz({ type: 'bandpass', f0: 900, q: 1.5, dur: 0.1, vol: 0.25 }); tn({ type: 'triangle', f0: 600, f1: 300, dur: 0.12, vol: 0.06 });
+    tn({ type: 'sine', f0: 180, f1: 1400, dur: 1.1, vol: 0.06, att: 0.3, when: 0.6 });
+    tn({ type: 'square', f0: 90, f1: 700, dur: 1.1, vol: 0.015, att: 0.3, when: 0.6 });
+    nz({ type: 'bandpass', f0: 1500, q: 2, dur: 0.08, vol: 0.2, when: 1.75 }); tn({ type: 'triangle', f0: 1320, dur: 0.25, vol: 0.05, when: 1.8 });
   },
   secret() { [523.3, 659.3, 784, 1046.5, 1318.5].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.6, vol: 0.07, when: i * 0.09 })); tn({ type: 'sine', f0: 130.8, dur: 1.4, vol: 0.08, att: 0.2 }); }
 });
