@@ -265,7 +265,8 @@ body.mode-ss{--amber:#ffc23a}
 .mode.on{border-color:var(--amber);background:rgba(242,177,52,.16)}
 .mode.on b{color:var(--amber)}
 .mode:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
-#keys{position:absolute;left:calc(var(--sl) + 16px);bottom:calc(var(--sb) + 30px);font-size:14px;letter-spacing:.06em;color:var(--ink-dim)}
+#keys{position:absolute;left:calc(var(--sl) + 16px);bottom:calc(var(--sb) + 30px);font-size:14px;letter-spacing:.06em;color:var(--ink-dim);transition:opacity .3s}
+#hint:not([hidden]) ~ #keys{opacity:0}#hint:not([hidden]) ~ #padKeys{opacity:0!important}
 
 #card{
   position:fixed;inset:0;display:flex;align-items:center;justify-content:flex-start;overflow-y:auto;touch-action:pan-y;
@@ -315,6 +316,69 @@ body.mode-ss{--amber:#ffc23a}
 }
 @media (max-width:420px){.stats{grid-template-columns:repeat(2,auto)}}
 @media (prefers-reduced-motion: reduce){#strikeBtn{animation:none}}
+
+/* ---------- v17: dawn scavenging ---------- */
+.scv-ui{display:none}
+body.scav .scv-ui{display:flex}
+body.scav #scvArrow:not(.on),body.scav #scvPrompt:not(.on){display:none}
+body.scav #ssTower,body.scav #ssChips,body.scav #ssUpg,body.scav #swapBtn,body.scav #nadeBtn,body.scav #nadeLine,body.scav #unlock{display:none!important}
+#scvTop{position:absolute;left:50%;top:calc(var(--st) + 10px);transform:translateX(-50%);width:min(280px,40vw);flex-direction:column;align-items:stretch;gap:5px;
+  padding:7px 12px 9px;border-radius:12px;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#scvTop .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#scvTime{font:400 28px/1 var(--f-zombie);letter-spacing:.06em;color:#c4ff6a;text-shadow:0 2px 0 #1f360c}
+#scvTop.warn #scvTime{color:#ff6a4a;text-shadow:0 2px 0 #3a0c06;animation:scvPulse .5s ease-in-out infinite alternate}
+#scvTop.warn{border-color:rgba(255,106,74,.7)}
+@keyframes scvPulse{from{transform:scale(1)}to{transform:scale(1.12)}}
+#scvBag{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+#scvBag i{display:block;height:12px;border-radius:3px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+#scvBag i.scrap{background:#d3dae6;box-shadow:none}
+#scvBag i.powder{background:#ff9a4a;box-shadow:none;border-radius:50%}
+#scvBag i.crystal{background:#6ff3ff;box-shadow:0 0 6px #6ff3ff;transform:rotate(45deg) scale(.78)}
+#scvTop.full #scvBag{animation:scvFull 1s ease-in-out infinite alternate}
+@keyframes scvFull{from{filter:none}to{filter:drop-shadow(0 0 4px #ffc23a)}}
+#scvBank{font-size:11px;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#scvHp{position:absolute;left:50%;bottom:calc(var(--sb) + 14px);transform:translateX(-50%);width:min(240px,36vw);height:9px;border-radius:5px;background:rgba(14,12,26,.6);box-shadow:0 0 0 1px var(--line);overflow:hidden}
+#scvHp.low{animation:scvPulse .45s ease-in-out infinite alternate}
+#scvHpFill{display:block;height:100%;width:100%;background:#5ce06a;transform-origin:left center;transition:transform .15s,background-color .3s}
+#scvArrow{position:absolute;left:50%;top:calc(var(--st) + 112px);transform:translateX(-50%);flex-direction:column;align-items:center;gap:2px;pointer-events:none}
+#scvArrow svg{width:46px;height:46px;color:#5cff8a;transform:rotate(var(--a,0rad));filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))}
+#scvArrow span{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#a8ffbe;text-shadow:0 1px 3px #000}
+#scvPrompt{position:absolute;left:50%;top:calc(50% + 64px);transform:translateX(-50%);font-size:15px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  padding:6px 14px;border-radius:999px;background:var(--glass);border:1px solid rgba(92,255,138,.6);color:#c4ffd4;white-space:nowrap;pointer-events:none}
+#climbBtn{display:none;width:64px;height:64px;right:156px;bottom:66px;border-radius:16px;border-color:#5cff8a;color:#7dffa0;background:rgba(20,90,44,.5)}
+body.scav #climbBtn.on{display:flex;animation:strikePulse 1.2s ease-out infinite}
+#scvFade{position:fixed;inset:0;background:#06040c;opacity:0;pointer-events:none;transition:opacity .45s ease;z-index:6}
+@media (max-height:440px){#scvTop{top:calc(var(--st) + 8px);padding:5px 10px 7px;gap:4px}#scvTime{font-size:24px}#scvArrow{top:calc(var(--st) + 92px)}#scvArrow svg{width:38px;height:38px}#scvPrompt{top:calc(50% + 52px);font-size:13px}}
+/* ---------- v17: the workbench ---------- */
+.panel.bench{width:min(820px,100%);max-width:min(820px,100%);gap:9px;padding:14px 16px 16px;border-radius:16px;background:rgba(16,13,10,.86);border:1px solid var(--line)}
+.bench .lead{max-width:60ch;font-size:15px}
+.bench .parts{display:flex;gap:16px;flex-wrap:wrap}
+.bench .pt{display:flex;align-items:baseline;gap:6px;font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+.bench .pt i{font-style:normal;font-size:16px}
+.bench .pt b{font-size:24px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.bench .pt.scrap i{color:#d3dae6}.bench .pt.powder i{color:#ff9a4a}.bench .pt.crystal i{color:#6ff3ff;text-shadow:0 0 8px #6ff3ff}
+.bench .label{margin:4px 0 0}
+.bench .actions{position:sticky;bottom:calc(-20px - var(--sb));z-index:2;margin:4px -16px -16px;padding:10px 16px calc(14px + var(--sb));border-radius:0 0 16px 16px;background:rgba(16,13,10,.97);box-shadow:0 -14px 14px -6px rgba(16,13,10,.92)}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:6px}
+.up{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:8px 10px 9px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);
+  color:var(--ink);font:600 13px/1.15 var(--f-hud);text-align:left;cursor:pointer;min-height:44px}
+.up:hover{background:rgba(255,255,255,.1)}
+.up .un{font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.up .ul{font-size:12px;letter-spacing:.08em;color:var(--amber);text-transform:uppercase}
+.up .ue{font-size:12px;letter-spacing:.03em;color:var(--ink-dim);font-weight:500}
+.up .uc{display:flex;gap:5px;margin-top:2px}
+.up[aria-disabled="true"]{opacity:.62;cursor:default}
+.up[aria-disabled="true"]:hover{background:rgba(255,255,255,.05)}
+.up.max{border-color:rgba(92,224,106,.45)}
+.up.max .ul{color:#5ce06a}
+.up.flash{animation:upFlash .7s ease-out}
+.up.nope{animation:upNope .35s ease-in-out}
+@keyframes upFlash{0%{background:rgba(255,194,58,.55);transform:scale(1.04)}100%{background:rgba(255,255,255,.05);transform:scale(1)}}
+@keyframes upNope{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.c{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:5px}
+.c.scrap{background:#d3dae6;color:#1b1d24}.c.powder{background:#ff9a4a;color:#2a1406}.c.crystal{background:#6ff3ff;color:#06262a}
+.c.no{opacity:.35}
+@media (max-height:440px){.panel.bench{gap:6px;padding:10px 12px 12px}.bench .actions{margin:2px -12px -12px;padding:8px 12px calc(10px + var(--sb))}.bench .lead{font-size:13px}.bench .pt b{font-size:20px}.up{padding:6px 9px 7px}.ugrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
 </style>
 
 </head>
@@ -362,6 +426,10 @@ body.mode-ss{--amber:#ffc23a}
   </div>
   <div id="ssTower" class="ss-ui" aria-label="Tower health"><div class="row"><span class="label" id="ssTowerLbl">Tower Lv 1</span><b id="ssTowerHp">1000</b></div><div id="ssTowerBar"><i id="ssTowerFill"></i></div></div>
   <div id="ssChips" class="ss-ui" aria-live="polite"></div>
+  <div id="scvTop" class="scv-ui" aria-label="Scavenging"><div class="row"><span class="label">Back up the ladder in</span><b id="scvTime">1:00</b></div><div id="scvBag" aria-label="Backpack"></div><span class="label" id="scvBank">Bag 0/10</span></div>
+  <div id="scvHp" class="scv-ui" aria-label="Your health"><i id="scvHpFill"></i></div>
+  <div id="scvArrow" class="scv-ui" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 3 L41 31 L28.5 26.5 L28.5 45 L19.5 45 L19.5 26.5 L7 31 Z" fill="currentColor"/></svg><span id="scvArrowDist">Ladder</span></div>
+  <div id="scvPrompt" class="scv-ui" aria-live="polite"></div>
   <div id="ssUpg" class="ss-ui" aria-live="polite"><span class="eyebrow" id="ssUpgEye">Tower upgrade</span><b id="ssUpgName">Auto-turret</b><span id="ssUpgSub"></span></div>
   <div class="tr">
     <div class="score"><span id="score">0</span><span class="label">Score</span></div>
@@ -389,6 +457,10 @@ body.mode-ss{--amber:#ffc23a}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/></svg>
         <span id="swapName">M9</span>
       </button>
+      <button class="tbtn" id="climbBtn" data-btn="climb" type="button" aria-label="Climb up the ladder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3v18M17 3v18M7 7h10M7 12h10M7 17h10"/></svg>
+        <span>Climb</span>
+      </button>
       <button class="tbtn" id="nadeBtn" data-btn="nade" type="button" aria-label="Throw grenade">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="11" cy="14.5" rx="5.5" ry="6.5"/><path d="M9 8V5.5h4V8"/><path d="M13 5.5l4-2"/><path d="M7.5 12.5h7M7.5 16.5h7"/></svg>
         <span>Nade</span><b id="nadeCount">2</b>
@@ -412,6 +484,7 @@ body.mode-ss{--amber:#ffc23a}
 </div>
 
 <div id="ssWheel" aria-hidden="true"><svg id="ssWheelSvg" viewBox="-170 -170 340 340" aria-label="Weapon wheel"></svg><div id="ssWheelInfo"><b id="ssWheelName"></b><span id="ssWheelKind"></span></div></div>
+<div id="scvFade"></div>
 <div id="card"></div>
 
 <script>
@@ -2640,6 +2713,8 @@ card.addEventListener('click', e => {
     else { setMode(m); showCard('title'); }
     return;
   }
+  const up = e.target.closest('[data-up]');
+  if (up && state === 'won' && mode === 'ss') { ssBenchBuy(up.dataset.up); return; }
   const se = e.target.closest('[data-ssequip]');
   if (se && state === 'paused' && mode === 'ss') { ssEquip(+se.dataset.ssequip, true); for (const kk in hudCache) delete hudCache[kk]; showCard('pause'); return; }
   const q = e.target.closest('[data-equip]');
@@ -2655,6 +2730,8 @@ card.addEventListener('click', e => {
   if (a === 'deploy') { if (mode === 'ss') ssDeploy(); else deploy(); }
   else if (a === 'resume') resume();
   else if (a === 'night') ssNextNight();
+  else if (a === 'scav') ssScavStart();
+  else if (a === 'bench') ssBenchSkip();
   else if (a === 'continue') ssDeploy(true);
   else if (a === 'newgame') { if (ssNewArm) ssDeploy(false); else { ssNewArm = true; showCard('title'); } }
   else if (a === 'menu') toMenu();
@@ -2681,6 +2758,7 @@ window.addEventListener('pointerdown', e => {
     else if (b === 'nade') { if (mode === 'ss') { ssNadeHold('touch', true); btn.classList.add('down'); ptrs.set(e.pointerId, { role: 'nade', x: e.clientX, y: e.clientY }); } else throwNade(); }
     else if (b === 'swap') { if (mode === 'ss') { ssWheelPress('touch', true); btn.classList.add('down'); ptrs.set(e.pointerId, { role: 'swap', x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }); } else startSwap(); }
     else if (b === 'strike') callStrike();
+    else if (b === 'climb') scvClimb();
     else if (b === 'pause') pause();
     return;
   }
@@ -2752,6 +2830,7 @@ window.addEventListener('keydown', e => {
     if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight', 'Space'].includes(k)) e.preventDefault();
     keys.add(k);
     if (e.repeat) return;
+    if (mode === 'ss' && scv.on && (k === 'Space' || k === 'KeyF')) scvClimb();
     if (mode === 'ss') { if (k === 'KeyR') ssStartReload(); else if (k === 'KeyQ') ssWheelPress('key', true); else if (/^Digit[1-9]$/.test(k)) ssPickDirect(+k.slice(5) - 1); else if (k === 'KeyE') ssToggleScope(); else if (k === 'KeyG') ssNadeHold('key', true); else if (k === 'Escape' || k === 'KeyP') pause(); }
     else if (k === 'KeyR') startReload();
     else if (k === 'KeyG') throwNade();
@@ -2764,7 +2843,7 @@ window.addEventListener('keydown', e => {
     else if (k === 'Escape' || k === 'KeyP') pause();
   } else if (state === 'paused' && (k === 'Escape' || k === 'KeyP')) resume();
   else if (state === 'title' && k === 'Enter') { if (mode === 'ss') ssDeploy(!!ssSaveGet()); else deploy(); }
-  else if (state === 'won' && k === 'Enter') ssNextNight();
+  else if (state === 'won' && k === 'Enter') { const pb = card.querySelector('.btn.primary'); if (pb) pb.click(); }
 });
 window.addEventListener('keyup', e => { keys.delete(e.code); if (e.code === 'Space') fKey = false; if (mode === 'ss') { if (e.code === 'KeyG') ssNadeHold('key', false); else if (e.code === 'KeyQ') ssWheelPress('key', false); } });
 window.addEventListener('blur', () => { keys.clear(); fKey = fMouse = false; ssNadeCancel(); });
@@ -2824,7 +2903,7 @@ function rumble(strong, weak, ms) {
   if (!a || typeof a.playEffect !== 'function') return;
   try { const p = a.playEffect('dual-rumble', { startDelay: 0, duration: ms, weakMagnitude: clamp(weak, 0, 1), strongMagnitude: clamp(strong, 0, 1) }); if (p && p.catch) p.catch(() => {}); } catch (e) {}
 }
-function padFocusables() { return card.hidden ? [] : Array.from(card.querySelectorAll('button, [data-equip]')); }
+function padFocusables() { return card.hidden ? [] : Array.from(card.querySelectorAll('button, [data-equip], [data-ssequip]')); }
 function clearPadFocus() { const f = card.querySelector('.padfocus'); if (f) f.classList.remove('padfocus'); padFocusI = -1; }
 function setPadFocus(els, i) {
   const n = els.length; if (!n) return;
@@ -2866,6 +2945,7 @@ function pollPad(dt) {
       look(lx * yawRate * dt / MOUSE_SENS, ly * pitchRate * dt / MOUSE_SENS, MOUSE_SENS);
     } else padBoost = 0;
     if (mode === 'ss') {
+      if (scv.on && (press(GP.cross) || press(GP.triangle))) scvClimb();
       if (press(GP.square)) ssStartReload(); if (press(GP.up)) ssCycle(); ssNadeHold('pad', !!b[GP.r1]);
       ssWheelPress('pad', !!b[GP.triangle]);
       if (ssWheelOpen) { const v = rs[2] >= ls[2] ? rs : ls; ssWheelAim(v[0], v[1], 0.5); if (press(GP.cross)) ssWheelClose(true); }
@@ -2892,7 +2972,7 @@ function pollPad(dt) {
       if (dir) { padNavT -= dt; if (padNavT <= 0) { setPadFocus(els, padFocusI + dir); padNavT = padNavRep ? 0.14 : 0.4; padNavRep = true; } }
       if (press(GP.cross)) { const el = els[padFocusI]; if (el) el.click(); }
       else if (press(GP.circle) && st === 'paused') resume();
-      else if (press(GP.options)) { if (st === 'paused') resume(); else if (st === 'won') ssNextNight(); else if (st === 'title' || st === 'over') { if (mode === 'ss') ssDeploy(st === 'title' && !!ssSaveGet()); else deploy(); } }
+      else if (press(GP.options)) { if (st === 'paused') resume(); else if (st === 'won') { const pb = card.querySelector('.btn.primary'); if (pb) pb.click(); } else if (st === 'title' || st === 'over') { if (mode === 'ss') ssDeploy(st === 'title' && !!ssSaveGet()); else deploy(); } }
     }
   }
   for (let i = 0; i < 18; i++) padPrev[i] = b[i];
@@ -3348,15 +3428,28 @@ function ssBuildGraveyard() {
   // crypt at the back
   const [cx, cz] = W(-10, 0), cy = ssH(cx, cz), cg = new GB(), stone = COLS(0x83869e), stoneD = COLS(0x5d6078);
   cg.geo2(rbox(5, 0.4, 6, 0.05, 1), mat4(0, 0.2, 0), stoneD, PB.conc);
-  cg.geo2(rbox(4.2, 3.4, 5, 0.08, 1), mat4(-0.3, 2.1, 0), stone, PB.conc);
+  // hollow: walls, a lintel over an open doorway and a ceiling, so there is a dark room inside (crystals turn up in there at dawn)
+  cg.geo2(rbox(0.36, 3.4, 5, 0.06, 1), mat4(-2.22, 2.1, 0), stone, PB.conc);
+  for (const s of [-1, 1]) {
+    cg.geo2(rbox(4.2, 3.4, 0.36, 0.06, 1), mat4(-0.3, 2.1, s * 2.32), stone, PB.conc);
+    cg.geo2(rbox(0.36, 3.4, 1.75, 0.06, 1), mat4(1.62, 2.1, s * 1.625), stone, PB.conc);
+  }
+  cg.geo2(rbox(0.36, 1.0, 1.52, 0.04, 1), mat4(1.62, 3.3, 0), stone, PB.conc);
+  cg.geo2(BOX1, mat4(-0.3, 3.65, 0, 0, 0, 0, 4.0, 0.3, 4.7), stoneD, PB.conc);
+  cg.geo2(BOX1, mat4(-0.3, 0.41, 0, 0, 0, 0, 3.6, 0.03, 4.3), COLS(0x3a3448), PB.conc);
+  // inside: a stone sarcophagus with a carved lid, and two candles
+  cg.geo2(rbox(1.1, 0.85, 2.1, 0.06, 1), mat4(-1.25, 0.82, 0), COLS(0x9a9cb4), PB.conc);
+  cg.geo2(rbox(1.2, 0.14, 2.2, 0.05, 1), mat4(-1.25, 1.3, 0), COLS(0xb0b2c8), PB.conc);
+  cg.geo2(rbox(0.5, 0.06, 1.2, 0.02, 1), mat4(-1.25, 1.39, 0), COLS(0x8a8ca4), PB.conc);
+  for (const z of [-1.7, 1.7]) { cg.geo2(cylG(0.05, 0.06, 0.22, 8), mat4(-1.95, 0.52, z), COLS(0xeee6cc), PB.cloth); cg.geo2(sphG(6, 4), mat4(-1.95, 0.67, z, 0, 0, 0, 0.03, 0.05, 0.03), COLS(0xffc45a), [0.5, 0, 3]); }
   const tri = new T.Shape(); tri.moveTo(-2.9, 0); tri.lineTo(2.9, 0); tri.lineTo(0, 1.4); tri.lineTo(-2.9, 0);
   const ped = new T.ExtrudeGeometry(tri, { depth: 5.0, bevelEnabled: false }); ped.rotateY(Math.PI / 2); ped.translate(-2.6, 4.05, 0);
   cg.geo2(ped, mat4(0, 0, 0), stoneD, PB.conc);
   cg.geo2(BOX1, mat4(0, 3.9, 0, 0, 0, 0, 4.8, 0.3, 5.6), stoneD, PB.conc);
   for (const z of [-1.8, -0.7, 0.7, 1.8]) cg.geo2(cylG(0.22, 0.26, 3.4, 12), mat4(2.2, 2.1, z), COLS(0xa3a6bc), PB.conc);
-  cg.geo2(BOX1, mat4(1.83, 1.6, 0, 0, 0, 0, 0.12, 2.4, 1.5), COLS(0x1a1426), PB.dark);
-  cg.geo2(BOX1, mat4(1.86, 1.6, 0, 0, 0, 0, 0.06, 2.55, 1.65), COLS(0x6aff9a), [0.5, 0, 2.2]);
-  cg.geo2(BOX1, mat4(1.9, 1.6, 0, 0, 0, 0, 0.06, 2.3, 1.38), COLS(0x1a1426), PB.dark);
+  // the doorway: a glowing green frame round an open way in
+  for (const s of [-1, 1]) cg.geo2(BOX1, mat4(1.83, 1.6, s * 0.8, 0, 0, 0, 0.42, 2.45, 0.1), COLS(0x6aff9a), [0.5, 0, 2.2]);
+  cg.geo2(BOX1, mat4(1.83, 2.84, 0, 0, 0, 0, 0.42, 0.1, 1.7), COLS(0x6aff9a), [0.5, 0, 2.2]);
   const crypt = new T.Group(); crypt.position.set(cx, cy, cz); crypt.rotation.y = -ang; ssScene.add(crypt);
   ssMesh(cg, SSM.pbr, true, true, crypt);
   ssPerchIn(crypt, 1.95, 5.46, 0, 'grave'); ssPerchIn(crypt, -2.2, 5.46, 0, 'grave');
@@ -3364,7 +3457,7 @@ function ssBuildGraveyard() {
   ssGlowSprite(0x58ff96, 4.5, null, gp.x, gp.y, gp.z, 0.5);
   ssCrypt = new T.PointLight(COLS(0x5aff94), 2.2, 18, 2); ssCrypt.position.copy(gp); ssCrypt.position.y += 0.4; ssScene.add(ssCrypt);
   SS_BOX.push({ minX: cx - 3.2, maxX: cx + 3.2, minZ: cz - 3.2, maxZ: cz + 3.2, minY: cy, maxY: cy + 5 });
-  SS_OBST.push({ x: cx, z: cz, r: 3.6 });
+  SS_OBST.push({ x: cx, z: cz, r: 3.6, bld: true }); SS.crypt = crypt;
   ssMesh(gb, SSM.pbr, true, true);
 }
 
@@ -3399,7 +3492,7 @@ function ssBuildFarm() {
   ssPerchIn(house, 2.8, 9.21, -0.8, 'farm');
   const wl = new T.PointLight(COLS(0xffb45a), 1.4, 12, 2); wl.position.set(0, 2.2, 5.8); house.add(wl); SS.houseLight = wl;
   SS_BOX.push({ minX: hx - 6, maxX: hx + 6, minZ: hz - 6, maxZ: hz + 6, minY: house.position.y - 1, maxY: house.position.y + 9.5 });
-  SS_OBST.push({ x: hx, z: hz, r: 6.5 });
+  SS_OBST.push({ x: hx, z: hz, r: 6.5, bld: true }); SS.house = house;
   // barn + silo
   const barn = new T.Group(), bx = 22, bz = -66; barn.position.set(bx, ssH(bx, bz), bz); barn.rotation.y = Math.atan2(-bx, -bz); ssScene.add(barn);
   const bg = new GB(), red = COLS(0xb8302a), redD = COLS(0x8e241f), white = COLS(0xf2ede4), bRoof = COLS(0x4a4e64);
@@ -3421,7 +3514,7 @@ function ssBuildFarm() {
   ssPerchIn(barn, 0, 8.92, 6.6, 'farm');
   SS.barnDoor = new T.Vector3(0, 0, 8.5).applyAxisAngle(_up, barn.rotation.y).add(barn.position);
   SS_BOX.push({ minX: bx - 7.5, maxX: bx + 7.5, minZ: bz - 7.5, maxZ: bz + 7.5, minY: barn.position.y - 1, maxY: barn.position.y + 9 });
-  SS_OBST.push({ x: bx, z: bz, r: 8.2 });
+  SS_OBST.push({ x: bx, z: bz, r: 8.2, bld: true }); SS.barn = barn;
   const sx = bx + 10, sz = bz - 4, sy = ssH(sx, sz);
   gb.geo2(cylG(3, 3, 13, 20), mat4(sx, sy + 6.3, sz), COLS(0x8e9ab4), PB.metal);
   for (let y = 1.5; y < 13; y += 2.2) gb.geo2(cylG(3.06, 3.06, 0.16, 20), mat4(sx, sy + y, sz), COLS(0x6e7894), PB.metal);
@@ -3757,6 +3850,9 @@ function poseZombie(z, dt) {
     if (z.type === 'bloater') { sx = 0.08 + Math.sin(ph * 2) * 0.05; hz = Math.sin(ph) * 0.16; aLz = 0.5; aRz = -0.5; aLx = -0.4 + Math.sin(ph) * 0.3; aRx = -0.4 - Math.sin(ph) * 0.3; }
     if (z.type === 'spitter') { sx = 0.55; hdx = -0.55; aLx = 0.25 + Math.sin(ph) * 0.3; aRx = 0.25 - Math.sin(ph) * 0.3; aLz = 0.3; aRz = -0.3; fLx = -0.9; fRx = -0.9; }
     if (z.state === 'rise') { const k = z.rise; aLx = lerp(-2.7, aLx, k); aRx = lerp(-2.5, aRx, k); sx = lerp(0.6, sx, k); tl = lerp(-0.9, tl, k); tr = lerp(-0.4, tr, k); sl = lerp(1.2, sl, k); }
+  } else if (z.state === 'idle') {   // a dormant straggler: hunched, head hanging, swaying
+    tl = 0.06; tr = -0.04; sl = -0.12; sr = -0.1; hy = m.hipY - 0.03; sx = 0.62 + Math.sin(ph * 0.9) * 0.06; hdx = 0.42 + Math.sin(ph * 0.6 + z.seed) * 0.12; hdz = 0.3 * z.tilt;
+    aLx = -0.18 + Math.sin(ph) * 0.07; aRx = -0.12 + Math.sin(ph + 1) * 0.07; aLz = 0.12; aRz = -0.12; fLx = -0.25; fRx = -0.2; hyaw = Math.sin(ph * 0.4) * 0.12; hz = Math.sin(ph * 0.5) * 0.05;
   } else if (z.state === 'attack') {
     const a = z.atk * TAU / z.rate, s1 = Math.max(0, Math.sin(a)), s2 = Math.max(0, Math.sin(a + Math.PI));
     tl = 0.25; tr = -0.2; sl = -0.3; sr = -0.15; sx = 0.28 + s1 * 0.18 + s2 * 0.18; hdx = -0.45;
@@ -3844,6 +3940,7 @@ function ssSpawnZombie(type, src) {
 const _zw = new T.Vector3();
 function ssRemoveZombie(zb) { ssScene.remove(zb.m.root); zPools[zb.type].push(zb.m); }
 function ssUpdateZombie(zb, dt) {
+  if (zb.hunt) return scvZombie(zb, dt);
   const m = zb.m, ty = ZTYPES[zb.type], sc = ty.scale || 1;
   zb.flinch = Math.max(0, zb.flinch - dt * 5);
   if (zb.kx || zb.kz) {   // blast knockback
@@ -3879,7 +3976,7 @@ function ssUpdateZombie(zb, dt) {
       const od = Math.hypot(ox, oz); if (od < R && od > 0.01) { const k = (R - od) / R * 2.6, side = (ox * uz - oz * ux) > 0 ? 1 : -1; ux += ox / od * k + uz * k * 0.6 * side; uz += oz / od * k - ux * k * 0.6 * side; }
     }
     const L = Math.hypot(ux, uz) || 1; ux /= L; uz /= L;
-    const sp = zb.speed * (1 - zb.flinch * 0.7);
+    const sp = zb.speed * (1 - zb.flinch * 0.7) * (ssBench.beacon && d < SS_BEACON_R ? 0.7 : 1);
     zb.x += ux * sp * dt; zb.z += uz * sp * dt;
     if (!ghost) for (const o of SS_OBST) {
       if (o.tower) continue;
@@ -4399,7 +4496,7 @@ function ssReset() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   ssWave = 0; ssWaveActive = false; ssQueue = []; ssInterT = 3.2; ssScore = 0; ssTowerMax = SS_TOWER_MAX; ssTowerHp = ssTowerMax; ssArmor = 0; ssTowerLv = 1; ssNewBest = false;
   ssStats = { kills: 0, heads: 0, shots: 0, hits: 0 };
-  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear(); ssNightReset(); ssRavensClear(); ssSpiritsClear(); ssBoltsClear();
+  ssBloom = 0; ssNadeN = SS_NADE_START; ssThrowT = 0; ssUpgReset(); ssEvReset(); ssWheelCancel(); ssRocketsClear(); ssNightReset(); ssRavensClear(); ssSpiritsClear(); ssBoltsClear(); scvAbort(); ssBenchReset();
   ssOwned = [0, 1]; ssCur = 0; ssAmmo = SNIPERS.map(d => d.mag); ssCd = 0; ssReloadT = 0; ssChargeT = 0; ssAdsT = ssAdsE = 0; ssScoped = false; ssSwapT = 0; ssScopeHold = 0;
   ssKick = ssRecoil = ssRecoilYaw = ssShake = ssMuzzleT = ssBoltT = ssHeat = 0; ssPx = ssPz = 0; ssLeanX = ssLeanZ = 0; ssMulti = 0; ssLastKill = -9; ssSnapT = 0; ssSnapZ = null; ssDawn = 0;
   player.yaw = Math.atan2(-SS_GRAVE_C.x, -SS_GRAVE_C.z); player.pitch = -0.16;
@@ -4415,6 +4512,7 @@ function ssDeploy(cont) {
   audioInit(); ssReset(); ssNewArm = false;
   const sv = cont ? ssSaveGet() : null;
   if (sv) ssResume(sv); else { ssSaveClear(); ssRavensNight(1); }
+  if (sv && sv.dawn) { keepAwake(); ssDawnResume(sv); return; }   // saved at dawn: back to the dawn card or the workbench
   state = 'play'; card.hidden = true; hud.hidden = false;
   keepAwake(); wantLock();
   if (sv) banner('Night ' + ssNightOf(sv.next), 'Continuing from ' + (ssIsFinal(sv.next) ? 'the final wave' : 'wave ' + ssWaveIn(sv.next)), 2.6);
@@ -4424,7 +4522,7 @@ function ssToTitle() {
   for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
   for (const d of SNIPERS) if (d.rig) d.rig.root.visible = false;
   ssTower.rotation.set(0, SS_TROT, 0); ssTower.position.set(0, 0, 0); ssScopeEl.style.opacity = 0;
-  ssUpgReset(); ssNightReset(); ssRavensClear(); ssSpiritsClear(); ssBoltsClear();
+  ssUpgReset(); ssNightReset(); ssRavensClear(); ssSpiritsClear(); ssBoltsClear(); scvAbort();
 }
 function ssStartWave(n) {
   ssRavensNight(ssNightOf(n));   // each night has its own three ravens
@@ -4472,7 +4570,7 @@ function ssUpdateWaves(dt) {
       ssWaveActive = false; ssInterT = 7.5; ssWaveDone();
       const bonus = 250 * ssWave; ssScore += bonus; popup('Wave cleared +' + bonus, 'gold'); sfx('clear');
       ssApplyUpgrade(ssWave);
-      const gotN = Math.min(SS_NADE_MAX, ssNadeN + 2) - ssNadeN; ssNadeN += gotN;
+      const gotN = Math.min(ssNadeMax(), ssNadeN + 2) - ssNadeN; ssNadeN += gotN;
       if (gotN) setTimeout(() => { if (state === 'play' && mode === 'ss') popup('+' + gotN + ' grenade' + (gotN > 1 ? 's' : ''), ''); }, 1200);
       const u = SS_UNLOCKS[ssWave];
       if (u !== undefined && !ssOwned.includes(u)) { ssOwned.push(u); ssEquip(u); setTimeout(() => { if ((state === 'play' || state === 'paused') && mode === 'ss') ssShowUnlock(SNIPERS[u]); }, 1000); }
@@ -4482,7 +4580,7 @@ function ssUpdateWaves(dt) {
 }
 function ssTowerHit(dmg, zb) {
   if (state !== 'play' || ssDayPhase === 1) return;   // nothing hurts the tower once the sun is up
-  dmg *= 1 - ssArmor;
+  dmg *= (1 - ssArmor) * ssArmourMul();
   ssTowerHp = Math.max(0, ssTowerHp - dmg);
   ssShake = Math.min(0.55, ssShake + dmg / 90);
   const f = ssFenceNear(zb.x, zb.z); ssChips(f[0], zb.y + 0.7 + Math.random() * 0.5, f[1], zb.type === 'boss' ? 14 : 5);
@@ -4506,8 +4604,9 @@ function ssEquip(i, instant) {
   if (instant || state !== 'play') { ssCur = i; ssReloadT = 0; ssChargeT = 0; return; }
   ssSwapTo = i; ssSwapT = 0.46; adsToggle = false; ssReloadT = 0; ssChargeT = 0; sfx('swap');
 }
-function ssCycle() { if (ssOwned.length < 2 || ssSwapT > 0 || state !== 'play') return; const k = ssOwned.indexOf(ssCur); ssEquip(ssOwned[(k + 1) % ssOwned.length]); }
+function ssCycle() { if (scv.on) return; if (ssOwned.length < 2 || ssSwapT > 0 || state !== 'play') return; const k = ssOwned.indexOf(ssCur); ssEquip(ssOwned[(k + 1) % ssOwned.length]); }
 function ssStartReload() {
+  if (scv.on) { scvReload(); return; }
   const d = ssDef(); if (ssReloadT > 0 || ssSwapT > 0 || ssAmmo[ssCur] >= d.mag || state !== 'play') return;
   ssReloadT = d.reload; ssChargeT = 0; adsToggle = false;
   if (d.ray) sfx('rayReload');
@@ -4515,7 +4614,7 @@ function ssStartReload() {
   else if (d.id === 'owl' || d.auto) { sfx('magOut', 'rifle'); setTimeout(() => { if (ssReloadT > 0) sfx('magIn', 'rifle'); }, d.reload * 550); setTimeout(() => { if (ssReloadT > 0) sfx('bolt'); }, d.reload * 820); }
   else { sfx('magOut', 'pistol'); setTimeout(() => { if (ssReloadT > 0) sfx('energyReload'); }, d.reload * 450); }
 }
-function ssToggleScope() { if (ssReloadT > 0 || ssSwapT > 0) return; adsToggle = !adsToggle; if (adsToggle) ssSnap(); }
+function ssToggleScope() { if (scv.on) { scvToggleAds(); return; } if (ssReloadT > 0 || ssSwapT > 0) return; adsToggle = !adsToggle; if (adsToggle) ssSnap(); }
 function ssSnap() {
   if (!(padActive || lastTouch)) return;
   camera.getWorldDirection(_sd); let best = null, ba = 0.07;
@@ -4833,13 +4932,12 @@ function ssUpdateTitle(dt) {
   if (camera.fov !== baseFov) { camera.fov = baseFov; camera.updateProjectionMatrix(); }
 }
 function ssFrame(dt) {
-  if (state === 'play') ssWheelTick(dt);
-  if (state === 'play') ssUpdate(dt);
+  if (state === 'play') { if (scv.on) scvUpdate(dt); else { ssWheelTick(dt); ssUpdate(dt); } }
   else if (state === 'over') ssUpdateOver(dt);
   else if (state === 'won') ssUpdateWon(dt);
   else if (state === 'title') ssUpdateTitle(dt);
   const sdt = dt * ssTS;
-  if (state !== 'paused') { ssFxUpdate(sdt); ssWorldTick(sdt, time); ssNumsUpdate(sdt); }
+  if (state !== 'paused') { ssFxUpdate(sdt); ssWorldTick(sdt, time); ssNumsUpdate(sdt); ssBeaconTick(sdt); }
   ssEnvUpdate(state === 'paused' ? 0 : sdt);
   camera.updateMatrixWorld();
   renderer.clear();
@@ -4908,7 +5006,7 @@ function ssHud(dt) {
   setText(hostilesEl, 'host', ssFinal ? 'Dawn in ' + Math.floor(st / 60) + ':' + String(st % 60).padStart(2, '0') : ssDayPhase === 1 ? 'Sunrise'
     : ssWaveActive ? left + (left === 1 ? ' zombie' : ' zombies') : (ssWave === 0 ? 'Get ready' : 'Next wave in ' + Math.max(1, Math.ceil(ssInterT))));
   setText(scoreEl, 'score', ssScore.toLocaleString());
-  setText(wNameEl, 'wname', d.name);
+  setText(wNameEl, 'wname', d.name + ssMkTag(ssCur));
   if (hudCache.wcol !== d.tier) { hudCache.wcol = d.tier; wNameEl.style.color = RARITY_HEX[d.tier]; ssScopeEl.style.setProperty('--rc', '#' + new T.Color(d.color).getHexString()); setText(ssZoomV, 'zoom', d.zoom + '×'); }
   setText(ammoNum, 'ammo', ssReloadT > 0 || ssSwapT > 0 ? '--' : String(ssAmmo[ssCur]));
   setText(ammoRes, 'res', '/ ∞');
@@ -4923,7 +5021,8 @@ function ssHud(dt) {
     hudCache.tw = tw; ssTowerFill.style.transform = 'scaleX(' + (ssTowerHp / ssTowerMax).toFixed(3) + ')'; setText(ssTowerHpEl, 'twn', String(Math.ceil(ssTowerHp)));
     const f = ssTowerHp / ssTowerMax; ssTowerFill.style.backgroundColor = f > 0.6 ? '#5ce06a' : f > 0.3 ? '#ffc23a' : '#ff4b3e'; ssTowerEl.classList.toggle('low', f <= 0.3);
   }
-  setText(ssTowerLbl, 'twl', 'Tower Lv ' + ssTowerLv + (ssArmor > 0 ? ' · Armour ' + Math.round(ssArmor * 100) + '%' : ''));
+  const arm = 1 - (1 - ssArmor) * ssArmourMul();
+  setText(ssTowerLbl, 'twl', 'Tower Lv ' + ssTowerLv + (arm > 0.001 ? ' · Armour ' + Math.round(arm * 100) + '%' : ''));
   setText(nadeCountEl, 'nade', String(ssNadeN)); setText(nadeLine, 'nadeL', 'Grenades ' + ssNadeN);
   if (hudCache.nadeEmpty !== (ssNadeN === 0)) { hudCache.nadeEmpty = ssNadeN === 0; nadeBtn.classList.toggle('empty', ssNadeN === 0); }
   const so = ssScoped ? clamp((ssAdsE - 0.93) / 0.06, 0, 1).toFixed(2) : '0';
@@ -4956,7 +5055,7 @@ function ssArsenalHTML(interactive) {
   return '<ul class="arsenal" aria-label="Weapons">' + SNIPERS.map((d, i) => {
     const got = ssOwned.includes(i), on = i === ssCur;
     const pick = interactive && got && !on, name = got || !d.secret || ssSecretKnown() ? d.name : '???';
-    return '<li class="' + (got ? 'got' : '') + '" style="' + (got ? 'background:' + RARITY_HEX[d.tier] + ';border-color:' + RARITY_HEX[d.tier] : 'color:' + RARITY_HEX[d.tier]) + (pick ? ';cursor:pointer' : '') + '"' + (pick ? ' data-ssequip="' + i + '" role="button" tabindex="0"' : '') + '>' + name + (got ? '' : d.secret ? ' · secret' : ' · wave ' + Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i)) + '</li>';
+    return '<li class="' + (got ? 'got' : '') + '" style="' + (got ? 'background:' + RARITY_HEX[d.tier] + ';border-color:' + RARITY_HEX[d.tier] : 'color:' + RARITY_HEX[d.tier]) + (pick ? ';cursor:pointer' : '') + '"' + (pick ? ' data-ssequip="' + i + '" role="button" tabindex="0"' : '') + '>' + name + (got ? ssMkTag(i) : '') + (got ? '' : d.secret ? ' · secret' : ' · wave ' + Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i)) + '</li>';
   }).join('') + '</ul>';
 }
 const ssBestLine = () => ssBest.score ? 'Best: night ' + ssNightOf(ssBest.wave) + ', wave ' + ssWaveIn(ssBest.wave) + ' · ' + ssBest.score.toLocaleString() + ' pts' : 'No record yet';
@@ -4971,7 +5070,7 @@ function ssCardHTML(kind) {
     const sv = ssSaveGet();
     return '<div class="panel">' + modeTabs() + '<h1 class="title">Zombie Shootout</h1>' +
       '<p class="lead">Hold your tower for ten waves. On the last one, hang on until sunrise burns every zombie left. Each wave makes the tower tougher and unlocks wilder guns, rockets and turrets.</p>' + controls +
-      (sv ? '<p class="saved">Saved run · night ' + ssNightOf(sv.next) + ', ' + (ssIsFinal(sv.next) ? 'final wave' : 'wave ' + ssWaveIn(sv.next)) + ' · ' + (sv.score | 0).toLocaleString() + ' pts</p>' : '') +
+      (sv ? '<p class="saved">Saved run · ' + (sv.dawn ? 'dawn after night ' + ssNightOf(sv.next - 1) : 'night ' + ssNightOf(sv.next) + ', ' + (ssIsFinal(sv.next) ? 'final wave' : 'wave ' + ssWaveIn(sv.next))) + ' · ' + (sv.score | 0).toLocaleString() + ' pts</p>' : '') +
       '<div class="actions">' + (sv ? '<button class="btn primary" type="button" data-act="continue">Continue</button><button class="btn ghost' + (ssNewArm ? ' warn' : '') + '" type="button" data-act="newgame">' + (ssNewArm ? 'Tap again to start over' : 'New game') + '</button>'
         : '<button class="btn primary" type="button" data-act="deploy">Start</button>') + '<button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button></div>' +
       '<p class="best">' + ssBestLine() + '</p></div>';
@@ -4979,10 +5078,17 @@ function ssCardHTML(kind) {
   if (kind === 'won') {
     const acc = ssStats.shots ? Math.round(ssStats.hits / ssStats.shots * 100) : 0, N = ssWonNight;
     return '<div class="panel"><p class="eyebrow">Sunrise</p><h1 class="title">Night ' + N + ' survived</h1>' +
-      '<p class="lead">The sun burned ' + ssSunKills + (ssSunKills === 1 ? ' zombie' : ' zombies') + '. Night bonus +' + ssWonBonus.toLocaleString() + '. Next up is night ' + (N + 1) + ', with tougher zombies and a longer wait for dawn.</p>' +
+      '<p class="lead">The sun burned ' + ssSunKills + (ssSunKills === 1 ? ' zombie' : ' zombies') + '. Night bonus +' + ssWonBonus.toLocaleString() + '. Now climb down and scavenge parts for upgrades: one minute, and a few stragglers survived in the shade.</p>' +
       '<div class="stats"><div><b>' + ssStats.kills + '</b><span>Zombies</span></div><div><b>' + ssStats.heads + '</b><span>Headshots</span></div><div><b>' + acc + '%</b><span>Accuracy</span></div><div><b>' + ssScore.toLocaleString() + '</b><span>Score</span></div></div>' +
       (ssNewBest ? '<p class="tag">New best</p>' : '') +
-      '<div class="actions"><button class="btn primary" type="button" data-act="night">Start night ' + (N + 1) + '</button><button class="btn ghost" type="button" data-act="menu">Menu</button></div></div>';
+      '<div class="actions"><button class="btn primary" type="button" data-act="scav">Go scavenging</button><button class="btn ghost" type="button" data-act="bench">Skip to workbench</button></div></div>';
+  }
+  if (kind === 'bench') return ssBenchHTML();
+  if (kind === 'pause' && scv.on) {
+    const s = Math.ceil(scv.left), b = SCV_KINDS.map(k => scv.bank[k] + ' ' + SCV_ITEM[k].name).join(', ');
+    return '<div class="panel"><p class="eyebrow">Paused · Dawn after night ' + scv.N + '</p><h1 class="title">Scavenging</h1>' +
+      '<p class="lead">' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' left. Bag ' + scv.bag.length + '/' + SCV_BAG + '. Banked so far: ' + b + '. Quitting keeps what you banked.</p>' +
+      '<div class="actions"><button class="btn primary" type="button" data-act="resume">Resume</button><button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button><button class="btn ghost" type="button" data-act="menu">Quit</button></div></div>';
   }
   if (kind === 'pause') {
     return '<div class="panel"><p class="eyebrow">Paused · Night ' + ssNightOf(ssWaveShown()) + '</p><h1 class="title">' + ssWaveTitle() + '</h1>' +
@@ -5191,7 +5297,7 @@ function ssTurretShoot(t, L) {
   const end = new T.Vector3().copy(o).addScaledVector(d, endT);
   ssBeam([o.clone(), end], ssPow.od > 0 ? 0x8ff6ff : 0xffe08a, 0.06, 0.02, 0.065, 0, 0.8);
   if (h && h.shield) { ssSparks(end.x, end.y, end.z, 0xffd27a, 4, 2.5); if (Math.random() < 0.3) sfx('clang', camera.position.distanceTo(end)); }
-  else if (h) ssHitZombie(h.z, SS_TURRET_LV[ssTurretLv].dmg * (h.head ? 1.6 : 1) * (ssPow.od > 0 ? 1.5 : 1), h.head, end, 0xffd27a, 'turret');
+  else if (h) ssHitZombie(h.z, SS_TURRET_LV[ssTurretLv].dmg * (h.head ? 1.6 : 1) * (ssPow.od > 0 ? 1.5 : 1) * (1 + 0.25 * ssBench.turret), h.head, end, 0xffd27a, 'turret');
   else if (tg > 0) { ssSparks(end.x, end.y + 0.05, end.z, 0xffd890, 2, 2.2); if (Math.random() < 0.3) ssDirt(end.x, end.y, end.z, 2); }
   t.flashT = 0.045; t.flash.material.rotation = Math.random() * TAU; t.flash.scale.setScalar(rand(0.3, 0.44)); t.kick = 1;
   sfx('turret', camera.position.distanceTo(o));
@@ -5224,7 +5330,7 @@ function ssTurretsUpdate(dt) {
     if (t.cool > 0) t.cool -= dt;
     else if (lined) {
       t.spin = Math.min(1, t.spin + dt * 5);
-      if (t.spin > 0.55 && t.cd <= 0) { ssTurretShoot(t, L); t.cd = L.rate / (ssPow.od > 0 ? 2 : 1); if (++t.shots >= L.burst * (ssPow.od > 0 ? 2 : 1)) { t.shots = 0; t.cool = 1.0; } }
+      if (t.spin > 0.55 && t.cd <= 0) { ssTurretShoot(t, L); t.cd = L.rate / (ssPow.od > 0 ? 2 : 1) / (1 + 0.15 * ssBench.turret); if (++t.shots >= L.burst * (ssPow.od > 0 ? 2 : 1)) { t.shots = 0; t.cool = 1.0; } }
     }
     if (!lined || t.cool > 0) t.spin = Math.max(0, t.spin - dt * 1.4);
     t.spinG.rotation.z += t.spin * dt * 32;
@@ -5248,6 +5354,7 @@ const ssNadePool = [], ssScorch = [];
 let ssNadeAimE = 0, ssNadeOn = false, ssNadeArc = null, ssNadeRing = null, ssNadeHand = null, ssScorchI = 0;
 function ssNadeAiming() { return ssNadeOn; }
 function ssNadeHold(src, v) {
+  if (scv.on) return;
   if (ssNadeSrc[src] === v) return;
   ssNadeSrc[src] = v;
   const any = ssNadeSrc.touch || ssNadeSrc.key || ssNadeSrc.pad;
@@ -5885,7 +5992,7 @@ function ssWheelRefresh() {
     g.classList.toggle('on', i === ssWheelSel); g.classList.toggle('cur', i === ssCur); g.classList.toggle('lock', !ssOwned.includes(i));
   }
   const i = ssWheelSel >= 0 ? ssWheelSel : ssCur, d = SNIPERS[i], got = ssOwned.includes(i);
-  ssWheelName.textContent = got || !d.secret || ssSecretKnown() ? d.name : '???'; ssWheelName.style.color = got ? RARITY_HEX[d.tier] : 'var(--ink-dim)';
+  ssWheelName.textContent = got || !d.secret || ssSecretKnown() ? d.name + (got ? ssMkTag(i) : '') : '???'; ssWheelName.style.color = got ? RARITY_HEX[d.tier] : 'var(--ink-dim)';
   const lock = Object.keys(SS_UNLOCKS).find(k => SS_UNLOCKS[k] === i);
   ssWheelKind.textContent = got ? d.kind + (i === ssCur ? ' · in hand' : '') : d.secret ? 'Secret · silence the 3 glowing ravens in one night' : 'Unlocks after wave ' + lock;
 }
@@ -5912,6 +6019,7 @@ function ssWheelClose(apply) {
 function ssWheelCancel() { ssWheelHold.pad = ssWheelHold.key = ssWheelHold.touch = -1; ssWheelClose(false); }
 // press/release from any source: a quick tap cycles, holding opens the wheel, letting go picks
 function ssWheelPress(src, down) {
+  if (scv.on) return;
   if (down) { if (ssWheelHold[src] < 0) ssWheelHold[src] = 0; return; }
   if (ssWheelHold[src] < 0) return;
   const t = ssWheelHold[src]; ssWheelHold[src] = -1;
@@ -5924,7 +6032,7 @@ function ssWheelTick(dt) {
   if (!ssWheelOpen && ssTS > 0.995) ssTS = 1;
 }
 function ssWheelMouse(mx, my) { ssWheelVX = clamp(ssWheelVX + mx * 0.02, -1.6, 1.6); ssWheelVY = clamp(ssWheelVY + my * 0.02, -1.6, 1.6); const L = Math.hypot(ssWheelVX, ssWheelVY); if (L > 1.6) { ssWheelVX *= 1.6 / L; ssWheelVY *= 1.6 / L; } ssWheelAim(ssWheelVX, ssWheelVY, 0.5); }
-function ssPickDirect(i) { if (state !== 'play' || i >= SNIPERS.length) return; if (!ssOwned.includes(i)) { sfx('empty'); if (SNIPERS[i].secret) hintMsg('Find the 3 glowing ravens to unlock it', 1.6); return; } ssEquip(i); }
+function ssPickDirect(i) { if (state !== 'play' || scv.on || i >= SNIPERS.length) return; if (!ssOwned.includes(i)) { sfx('empty'); if (SNIPERS[i].secret) hintMsg('Find the 3 glowing ravens to unlock it', 1.6); return; } ssEquip(i); }
 
 Object.assign(SFX, {
   wheelOpen() { nz({ type: 'bandpass', f0: 600, f1: 1800, q: 1, dur: 0.16, vol: 0.12, att: 0.02 }); tn({ type: 'sine', f0: 320, f1: 160, dur: 0.3, vol: 0.06 }); },
@@ -6084,7 +6192,7 @@ function ssNightReset() {
 const SS_SAVE_KEY = 'fbz-ss-save';
 function ssSave(next, hp) {
   const h = hp === undefined ? ssTowerHp : hp;   // health is kept as a share of max too, so a resumed tower matches however its max is rebuilt
-  store.set(SS_SAVE_KEY, JSON.stringify({ v: 1, next, score: ssScore, stats: ssStats, hp: Math.round(h), hpf: +(h / ssTowerMax).toFixed(4), owned: ssOwned.slice(), cur: ssCur, nades: ssNadeN, rv: ssRavenState(), t: Date.now() }));
+  store.set(SS_SAVE_KEY, JSON.stringify({ v: 1, next, score: ssScore, stats: ssStats, hp: Math.round(h), hpf: +(h / ssTowerMax).toFixed(4), owned: ssOwned.slice(), cur: ssCur, nades: ssNadeN, rv: ssRavenState(), bench: ssBenchState(), dawn: ssDawnStage, t: Date.now() }));
 }
 function ssSaveClear() { store.set(SS_SAVE_KEY, ''); }
 function ssSaveGet() {
@@ -6094,10 +6202,11 @@ function ssSaveGet() {
 function ssResume(s) {
   const w0 = s.next - 1;
   for (let w = 1; w <= w0; w++) ssApplyUpgrade(w, true);
+  ssBenchLoad(s.bench);   // parts and workbench upgrades come back too
   ssWave = w0;
   ssOwned = s.owned.filter(i => i >= 0 && i < SNIPERS.length); if (!ssOwned.length) ssOwned = [0, 1];
   ssCur = ssOwned.includes(s.cur) ? s.cur : ssOwned[0];
-  ssTowerHp = clamp(s.hpf > 0 ? Math.round(s.hpf * ssTowerMax) : (s.hp || ssTowerMax), 1, ssTowerMax); ssNadeN = clamp(s.nades | 0, 0, SS_NADE_MAX);
+  ssTowerHp = clamp(s.hpf > 0 ? Math.round(s.hpf * ssTowerMax) : (s.hp || ssTowerMax), 1, ssTowerMax); ssNadeN = clamp(s.nades | 0, 0, ssNadeMax());
   ssScore = s.score | 0; ssStats = Object.assign({ kills: 0, heads: 0, shots: 0, hits: 0 }, s.stats); ssInterT = 4;
   const N = ssNightOf(s.next); ssRavensNight(N, s.rv && s.rv.night === N ? s.rv : null);   // the same ravens, minus any already shot tonight
 }
@@ -6194,7 +6303,7 @@ function ssNightWon() {
   const N = ssNightOf(ssWave);
   ssDayPhase = 2; ssWonNight = N;
   ssWonBonus = 2500 * N; ssScore += ssWonBonus;
-  ssApplyUpgrade(ssWave, true); ssNadeN = SS_NADE_MAX;
+  ssApplyUpgrade(ssWave, true); ssNadeN = ssNadeMax(); ssDawnStage = 1; ssBenchSummary = null;
   ssNightsOpen = Math.max(ssNightsOpen, N + 1); store.set('fbz-ss-nights', String(ssNightsOpen));
   ssSave(ssWave + 1, ssTowerMax);   // quitting at sunrise picks up at the next night, tower repaired
   ssNewBest = ssScore > ssBest.score;
@@ -6207,7 +6316,7 @@ function ssNightWon() {
 function ssNextNight() {
   if (state !== 'won') return;
   state = 'play'; card.hidden = true; hud.hidden = false; for (const k in hudCache) delete hudCache[k];
-  ssDayPhase = 3; ssDayT = 0; ssTowerHp = ssTowerMax; ssInterT = 8.5;
+  ssDayPhase = 3; ssDayT = 0; ssTowerHp = ssTowerMax; ssInterT = 8.5; ssDawnStage = 0; scvAbort();
   keepAwake(); wantLock();
   banner('Night ' + (ssWonNight + 1), 'Tower repaired. Night falls again', 3); ssRavensNight(ssWonNight + 1);
   sfx('dusk');
@@ -6248,6 +6357,9 @@ function ssDawnVisuals(kd) {
   // the key light swings from the moon to the low sun (never from below the ground)
   _n9b.copy(ssSunDir); _n9b.y = Math.max(_n9b.y, 0.16); _n9b.normalize();
   _n9a.copy(SS_MOON_DIR).lerp(_n9b, kd).normalize(); ssMoonLight.position.copy(_n9a).multiplyScalar(110);
+  // shadows follow you round the farm while you scavenge
+  const sx = scv.on ? Math.round(scv.x / 4) * 4 : 0, sz = scv.on ? Math.round(scv.z / 4) * 4 : 0;
+  ssMoonLight.position.x += sx; ssMoonLight.position.z += sz; ssMoonLight.target.position.set(sx, 0, sz);
   renderer.toneMappingExposure = SS_EXPOSURE + 0.1 * kd;
 }
 
@@ -6394,7 +6506,7 @@ function ssRavenQuestDone() {
     for (let i = 0; i < 5; i++) { const a = player.yaw + (i - 2) * 0.55; ssSpiritGhost(_r10a.set(camera.position.x - Math.sin(a) * 3.5, camera.position.y + 1.2 + i % 2, camera.position.z - Math.cos(a) * 3.5), _r10b.set(-Math.sin(a), 0.55, -Math.cos(a))); }
     setTimeout(() => { if ((state === 'play' || state === 'paused') && mode === 'ss') { ssShowUnlock(SNIPERS[SS_SECRET]); hintMsg('Its bolts blast zombies to dust', 4); } }, 1600);
   } else {   // already carrying it: a bounty instead
-    const b = 3000 * ssRav.night; ssScore += b; ssNadeN = SS_NADE_MAX;
+    const b = 3000 * ssRav.night; ssScore += b; ssNadeN = ssNadeMax();
     banner('The ravens are silenced', 'Raven bounty +' + b.toLocaleString() + ' and full grenades', 3); sfx('secret');
   }
 }
@@ -6655,6 +6767,1193 @@ Object.assign(SFX, {
   secret() { [523.3, 659.3, 784, 1046.5, 1318.5].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.6, vol: 0.07, when: i * 0.09 })); tn({ type: 'sine', f0: 130.8, dur: 1.4, vol: 0.08, att: 0.2 }); }
 });
 
+// ===== Part S11: dawn scavenging — after each sunrise, climb down with a revolver and grab parts before the stragglers get you =====
+const SCV_T = 60, SCV_WARN = 15, SCV_BAG = 10, SCV_R = 0.34, SCV_EYE = 1.62, SCV_BOUND = 98, SCV_RING_R = 2.1;
+const SCV_KINDS = ['scrap', 'powder', 'crystal'];
+const SCV_ITEM = {
+  scrap: { name: 'scrap', col: '#d3dae6', hex: 0xd3dae6, glyph: '⛭' },
+  powder: { name: 'gunpowder', col: '#ff9a4a', hex: 0xff9a4a, glyph: '●' },
+  crystal: { name: 'crystal', col: '#6ff3ff', hex: 0x6ff3ff, glyph: '◆' }
+};
+// the ground gun: a chunky farm revolver. Eight in the cylinder, and a headshot always drops a straggler
+const SCV_GUN = { id: 'rev', name: 'Barn Burner', kind: 'Revolver', dmg: 62, headMul: 4, rate: 0.24, mag: 8, reload: 1.55, zoom: 1.22, adsTime: 0.11, spread: [0.02, 0.0028], color: 0xffc46a };
+const SCV_ZHP = { walker: N => 90 + (N - 1) * 12, runner: N => 70 + (N - 1) * 8 };
+const SCV_ZDMG = { walker: 16, runner: 11 };
+const scv = {
+  on: false, ph: 'off', t: 0, left: SCV_T, x: 0, z: 0, y: 0, vx: 0, vz: 0, hp: 100, hurt: 0, lastHit: -9, bag: [], bank: { scrap: 0, powder: 0, crystal: 0 },
+  lost: 0, why: '', warned: false, ring: false, bob: 0, move: 0, stepAcc: 0, sprint: false, cap: 6, spawnT: 0, kills: 0, tick: -1, N: 1,
+  ammo: SCV_GUN.mag, cd: 0, rel: 0, relP: 0, adsT: 0, adsE: 0, kick: 0, rec: 0, recY: 0, shake: 0, flashT: 0, ham: 0.5, cylA: 0, cylTo: 0, raise: 0,
+  prying: null, fullT: 0, yaw0: 0, pitch0: 0, cam0: new T.Vector3(), birdT: 3, snapZ: null, snapT: 0, fade: 0, bagKey: '', dir: 0
+};
+const SCV_N = new T.Vector3(Math.sin(SS_TROT), 0, Math.cos(SS_TROT));      // outward normal of the tower face the ladder hangs off
+const SCV_TG = new T.Vector3(Math.cos(SS_TROT), 0, -Math.sin(SS_TROT));    // along that face
+const SCV_LAD = { top: new T.Vector3(), foot: new T.Vector3(), dir: new T.Vector3(), nrm: new T.Vector3(), ring: new T.Vector3(), L: 1, phi: 0.3 };
+const SCV_COL = { circles: [], boxes: [], floors: [] };
+const scvNodes = [], scvPlumes = [];
+let scvBuilt = false, scvLadder = null, scvRingM = null, scvBeamM = null, scvStash = null, scvRig = null, scvKit = null;
+const _c1 = new T.Vector3(), _c2 = new T.Vector3(), _c3 = new T.Vector3(), _cd = new T.Vector3(), _cx = new T.Vector3(), _cy = new T.Vector3(), _co = new T.Vector3();
+const scvTopEl = $('scvTop'), scvTimeEl = $('scvTime'), scvBagEl = $('scvBag'), scvBankEl = $('scvBank'), scvHpEl = $('scvHp'), scvHpFill = $('scvHpFill');
+const scvArrowEl = $('scvArrow'), scvArrowDist = $('scvArrowDist'), scvPromptEl = $('scvPrompt'), climbBtnEl = $('climbBtn'), scvFadeEl = $('scvFade');
+const scvActive = () => scv.on;
+
+// ---------- Frames: oriented boxes (three.js rotation.y = a), so walls of the barn, crypt and fences collide where they really are ----------
+function scvBox(cx, cz, a, hx, hz, y0, y1, o) { const b = Object.assign({ cx, cz, c: Math.cos(a), s: Math.sin(a), hx, hz, y0, y1 }, o || {}); SCV_COL.boxes.push(b); return b; }
+function scvToLocal(b, x, z, out) { const dx = x - b.cx, dz = z - b.cz; out[0] = dx * b.c - dz * b.s; out[1] = dx * b.s + dz * b.c; return out; }
+const _cl = [0, 0];
+// a thin wall between two world points
+function scvWall(ax, az, bx, bz, t, h, o) {
+  const L = Math.hypot(bx - ax, bz - az), a = Math.atan2(-(bz - az), bx - ax);
+  return scvBox((ax + bx) / 2, (az + bz) / 2, a, L / 2, t / 2, ssH((ax + bx) / 2, (az + bz) / 2) - 0.5, ssH((ax + bx) / 2, (az + bz) / 2) + h, o);
+}
+// graveyard and crypt frames (both use rotation.y = -ang, +x toward the tower)
+let SCV_GA = 0, SCV_CRYPT = null;
+function scvGrave(lx, lz) { const G = SS_GRAVE_C, c = Math.cos(SCV_GA), s = Math.sin(SCV_GA); return [G.x + lx * c + lz * s, G.z - lx * s + lz * c]; }
+function scvGraveLocal(x, z) { const G = SS_GRAVE_C, c = Math.cos(SCV_GA), s = Math.sin(SCV_GA), dx = x - G.x, dz = z - G.z; return [dx * c - dz * s, dx * s + dz * c]; }
+function scvCrypt(lx, lz) { const C = SCV_CRYPT; return [C.x + lx * C.c + lz * C.s, C.z - lx * C.s + lz * C.c]; }
+function scvCryptLocal(x, z) { const C = SCV_CRYPT, dx = x - C.x, dz = z - C.z; return [dx * C.c - dz * C.s, dx * C.s + dz * C.c]; }
+
+function scvBuildColliders() {
+  SCV_COL.circles = SS_OBST.filter(o => !o.tower && !o.bld).map(o => ({ x: o.x, z: o.z, r: o.r }));
+  SCV_COL.boxes = []; SCV_COL.floors = [];
+  const barn = SS.barn, house = SS.house, crypt = SS.crypt;
+  scvBox(barn.position.x, barn.position.z, barn.rotation.y, 5.6, 7.1, barn.position.y - 1, barn.position.y + 9, { bld: 'barn' });
+  scvBox(house.position.x, house.position.z, house.rotation.y, 5.05, 3.45, house.position.y - 1, house.position.y + 9.5, { bld: 'house' });
+  // the crypt is hollow: back, sides, front either side of the door, lintel; the base slab is a floor
+  SCV_GA = SS_GRAVE_C.a + Math.PI;
+  SCV_CRYPT = { x: crypt.position.x, z: crypt.position.z, y: crypt.position.y, a: crypt.rotation.y, c: Math.cos(crypt.rotation.y), s: Math.sin(crypt.rotation.y) };
+  const cw = (lx, lz, hx, hz, y0, y1) => { const [x, z] = scvCrypt(lx, lz); return scvBox(x, z, crypt.rotation.y, hx, hz, crypt.position.y + y0, crypt.position.y + y1, { crypt: true }); };
+  cw(-2.22, 0, 0.18, 2.5, 0, 3.9); cw(-0.3, 2.32, 2.1, 0.18, 0, 3.9); cw(-0.3, -2.32, 2.1, 0.18, 0, 3.9);
+  cw(1.62, 1.625, 0.18, 0.875, 0, 3.9); cw(1.62, -1.625, 0.18, 0.875, 0, 3.9); cw(1.62, 0, 0.18, 0.75, 2.8, 3.9);
+  for (const z of [-1.8, -0.7, 0.7, 1.8]) { const [x, zz] = scvCrypt(2.2, z); SCV_COL.circles.push({ x, z: zz, r: 0.27 }); }
+  { const [x, z] = scvCrypt(0, 0); SCV_COL.floors.push({ cx: x, cz: z, c: SCV_CRYPT.c, s: SCV_CRYPT.s, hx: 2.5, hz: 3.0, y: crypt.position.y + 0.4 }); }
+  // sarcophagus inside, where the crystals sit
+  { const [x, z] = scvCrypt(-1.25, 0); scvBox(x, z, crypt.rotation.y, 0.56, 1.06, crypt.position.y, crypt.position.y + 1.4, { crypt: true, low: true }); }
+  // graveyard railings, with the gate facing the tower
+  const g = (ax, az, bx, bz) => { const [x0, z0] = scvGrave(ax, az), [x1, z1] = scvGrave(bx, bz); scvWall(x0, z0, x1, z1, 0.16, 1.7, { fence: 'grave' }); };
+  g(-15, -11, 15, -11); g(-15, 11, 15, 11); g(-15, -11, -15, 11); g(15, -11, 15, -2.3); g(15, 2.3, 15, 11);
+  // farm rail fences
+  for (const [ax, az, bx, bz] of [[28, -24, 62, -24], [62, -24, 66, -58], [30, -44, 28, -24]]) scvWall(ax, az, bx, bz, 0.2, 1.3, { fence: 'farm' });
+}
+function scvFloorY(x, z) {
+  let y = ssH(x, z);
+  for (const f of SCV_COL.floors) { const dx = x - f.cx, dz = z - f.cz, lx = dx * f.c - dz * f.s, lz = dx * f.s + dz * f.c; if (Math.abs(lx) <= f.hx && Math.abs(lz) <= f.hz && f.y > y) y = f.y; }
+  return y;
+}
+// push a circle (p.x, p.z, radius r) out of everything solid; ghost: walk through boxes (a stuck zombie)
+function scvCollide(p, r, ghost) {
+  for (let it = 0; it < 2; it++) {
+    for (const o of SCV_COL.circles) {
+      const dx = p.x - o.x, dz = p.z - o.z, R = o.r + r; if (dx > R || dx < -R || dz > R || dz < -R) continue;
+      const d = Math.hypot(dx, dz); if (d < R && d > 1e-4) { p.x = o.x + dx / d * R; p.z = o.z + dz / d * R; }
+    }
+    if (!ghost) for (const b of SCV_COL.boxes) {
+      const R = Math.max(b.hx, b.hz) + r + 0.5; if (Math.abs(p.x - b.cx) > R || Math.abs(p.z - b.cz) > R) continue;
+      scvToLocal(b, p.x, p.z, _cl); const lx = _cl[0], lz = _cl[1];
+      if (Math.abs(lx) > b.hx + r || Math.abs(lz) > b.hz + r) continue;
+      const qx = clamp(lx, -b.hx, b.hx), qz = clamp(lz, -b.hz, b.hz); let nx = lx - qx, nz = lz - qz, d = Math.hypot(nx, nz);
+      if (d >= r) continue;
+      if (d < 1e-5) {   // centre inside the box: out through the nearest face
+        const ex = b.hx - Math.abs(lx), ez = b.hz - Math.abs(lz);
+        if (ex < ez) { nx = Math.sign(lx) || 1; nz = 0; d = -ex; } else { nx = 0; nz = Math.sign(lz) || 1; d = -ez; }
+      } else { nx /= d; nz /= d; }
+      const push = r - d, wx = nx * b.c + nz * b.s, wz = -nx * b.s + nz * b.c;
+      p.x += wx * push; p.z += wz * push;
+    }
+    const f = ssFenceNear(p.x, p.z); if (f[2] < r) { p.x = f[0] + f[3] * r; p.z = f[1] + f[4] * r; }   // the palisade
+  }
+  const L = Math.hypot(p.x, p.z); if (L > SCV_BOUND) { p.x *= SCV_BOUND / L; p.z *= SCV_BOUND / L; }
+}
+// bullets stop on walls: barn, house, crypt walls, the palisade and the silo
+function scvRayWalls(o, d, maxT) {
+  let best = maxT;
+  for (const b of SCV_COL.boxes) {
+    if (b.fence === 'farm') continue;
+    const ox = o.x - b.cx, oz = o.z - b.cz;
+    _c1.set(ox * b.c - oz * b.s, o.y, ox * b.s + oz * b.c); _c2.set(d.x * b.c - d.z * b.s, d.y, d.x * b.s + d.z * b.c);
+    const r = rayBox(_c1, _c2, -b.hx, b.y0, -b.hz, b.hx, b.fence ? b.y0 + 0.9 : b.y1, b.hz, best);   // railings: the bars let most shots through
+    if (r && r.t < best) best = r.t;
+  }
+  const ts = rayCyl(o, d, 32, -70, 3.0, -1, 14, best); if (ts > 0) best = ts;   // silo
+  // palisade: four log walls round the tower base
+  for (let k = 0; k < 4; k++) {
+    const a = SS_TROT, c = Math.cos(a), s = Math.sin(a), ox = o.x, oz = o.z;
+    _c1.set(ox * c - oz * s, o.y, ox * s + oz * c); _c2.set(d.x * c - d.z * s, d.y, d.x * s + d.z * c);
+    const P = SS_PAL, w = 0.16, B = [[-P, -P - w, P, -P + w], [-P, P - w, P, P + w], [-P - w, -P, -P + w, P], [P - w, -P, P + w, P]][k];
+    const r = rayBox(_c1, _c2, B[0], -1, B[1], B[2], 2.0, B[3], best); if (r && r.t < best) best = r.t;
+  }
+  return best < maxT ? best : -1;
+}
+
+// ---------- The ladder: lowered over the railing on the face between the farm and the graveyard ----------
+function scvLadderSetup() {
+  const off = -0.85, L0 = SCV_LAD;
+  L0.top.copy(SCV_N).multiplyScalar(2.22).addScaledVector(SCV_TG, off); L0.top.y = SS_PLAT + 0.82;
+  const fx = SCV_N.x * 5.4 + SCV_TG.x * off, fz = SCV_N.z * 5.4 + SCV_TG.z * off;
+  L0.foot.set(fx, ssH(fx, fz), fz);
+  const hz = Math.hypot(L0.foot.x - L0.top.x, L0.foot.z - L0.top.z), vt = L0.top.y - L0.foot.y;
+  L0.L = Math.hypot(hz, vt); L0.phi = Math.atan2(hz, vt);
+  L0.dir.set(0, -Math.cos(L0.phi), 0).addScaledVector(SCV_N, Math.sin(L0.phi));
+  L0.nrm.set(0, Math.sin(L0.phi), 0).addScaledVector(SCV_N, Math.cos(L0.phi));
+  L0.ring.copy(L0.foot).addScaledVector(SCV_N, 1.2); L0.ring.y = ssH(L0.ring.x, L0.ring.z);
+  const gb = new GB(), wood = COLS(0x9a5f30), woodL = COLS(0xc98a48), rope = COLS(0xd9c48a), L = L0.L;
+  for (const s of [-1, 1]) {
+    gb.geo2(cylG(1, 1, 1, 8), segM(s * 0.25, 0.48, 0, s * 0.25, -L - 0.06, 0, 0.048), wood, PB.wood);
+    gb.geo2(sphG(8, 6), mat4(s * 0.25, 0.5, 0, 0, 0, 0, 0.055, 0.055, 0.055), wood, PB.wood);
+    gb.geo2(new T.TorusGeometry(0.075, 0.02, 6, 14), mat4(s * 0.25, -0.06, 0, Math.PI / 2, 0, 0), rope, PB.cloth);
+    gb.geo2(cylG(0.07, 0.09, 0.08, 8), mat4(s * 0.25, -L - 0.08, 0), COLS(0x4a3a2a), PB.rubber);
+  }
+  for (let y = -0.3; y > -L + 0.12; y -= 0.34) gb.geo2(cylG(1, 1, 1, 7), segM(-0.25, y, 0, 0.25, y, 0, 0.034), woodL, PB.wood);
+  scvLadder = new T.Group(); scvLadder.position.copy(L0.top); gb.mesh(SSM.pbr, true, true, scvLadder);
+  scvLadder.visible = false; ssScene.add(scvLadder); scvLadderPose(1);
+  // the drop-off ring at its foot, a pillar of light you can find from anywhere, and the stash crate
+  const ringM = new T.Mesh(new T.RingGeometry(SCV_RING_R - 0.16, SCV_RING_R, 56), new T.MeshBasicMaterial({ color: 0x5cff8a, transparent: true, opacity: 0.85, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, toneMapped: false }));
+  const disc = new T.Mesh(new T.CircleGeometry(SCV_RING_R - 0.16, 48), new T.MeshBasicMaterial({ color: 0x3aff7a, transparent: true, opacity: 0.12, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, toneMapped: false }));
+  ringM.rotation.x = disc.rotation.x = -Math.PI / 2;
+  scvRingM = new T.Group(); scvRingM.add(ringM, disc); scvRingM.position.copy(L0.ring); scvRingM.position.y += 0.06; scvRingM.userData = { ringM, disc };
+  const bc = cv(4, 128), bx = bc.getContext('2d'), bgr = bx.createLinearGradient(0, 0, 0, 128);
+  bgr.addColorStop(0, 'rgba(255,255,255,0)'); bgr.addColorStop(0.55, 'rgba(255,255,255,0.35)'); bgr.addColorStop(1, 'rgba(255,255,255,1)');
+  bx.fillStyle = bgr; bx.fillRect(0, 0, 4, 128);
+  scvBeamM = new T.Mesh(new T.CylinderGeometry(0.55, 0.85, 34, 18, 1, true), new T.MeshBasicMaterial({ map: tx(bc, false, false), color: 0x5cff8a, transparent: true, opacity: 0.32, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false, fog: false }));
+  scvBeamM.position.copy(L0.ring); scvBeamM.position.y += 17;
+  const sg = new GB(), crateC = COLS(0x9a6a3a), crateD = COLS(0x6a4422), strap = COLS(0x3a3e4a);
+  sg.geo2(rbox(1.0, 0.55, 0.7, 0.04, 1), mat4(0, 0.27, 0), crateC, PB.wood);
+  for (const x of [-0.46, 0.46]) sg.geo2(BOX1, mat4(x, 0.27, 0, 0, 0, 0, 0.06, 0.57, 0.72), crateD, PB.wood);
+  sg.geo2(BOX1, mat4(0, 0.4, 0, 0, 0, 0, 1.02, 0.06, 0.72), strap, PB.metal);
+  scvStash = new T.Group(); gbMeshTo(sg, scvStash);
+  const fill = new T.Group(); scvStash.add(fill); scvStash.userData.fill = fill;
+  const sp = L0.ring.clone().addScaledVector(SCV_TG, 1.25).addScaledVector(SCV_N, -0.7); scvStash.position.set(sp.x, ssH(sp.x, sp.z), sp.z); scvStash.rotation.y = SS_TROT + 0.3;
+  for (const o of [scvRingM, scvBeamM, scvStash]) { o.visible = false; ssScene.add(o); }
+}
+function gbMeshTo(gb, parent, cast) { const m = new T.Mesh(gb.geo(), SSM.pbr); m.castShadow = cast !== false; m.receiveShadow = true; parent.add(m); return m; }
+// k: 0 standing upright on the deck, 1 leaning down over the palisade
+function scvLadderPose(k) { const phi = lerp(Math.PI, SCV_LAD.phi, k); scvLadder.rotation.set(-phi, SS_TROT, 0, 'YXZ'); }
+// eye position while on the ladder, feet on the rung a fraction u of the way down
+function scvLadderEye(u, out) {
+  const L0 = SCV_LAD; out.copy(L0.top).addScaledVector(L0.dir, clamp(u, 0, 1) * L0.L).addScaledVector(L0.nrm, 0.36); out.y += 1.5; return out;
+}
+
+// ---------- Loot: models ----------
+function scvKitBuild() {
+  if (scvKit) return;
+  const mk = fn => { const gb = new GB(); fn(gb); return gb.geo(); };
+  const rust = COLS(0xb8643a), rustD = COLS(0x8a4426), steel = COLS(0xaab3c4), steelD = COLS(0x6a7282), red = COLS(0xd0453a), blue = COLS(0x4f7fd0), tire = COLS(0x26262c), yel = COLS(0xf2c33a);
+  const gear = (gb, x, y, z, r, rx, ry, col) => {
+    gb.geo2(cylG(r, r, r * 0.35, 18), mat4(x, y, z, rx, ry, 0), col, PB.metal);
+    for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; _e.set(rx, ry, 0); _q.setFromEuler(_e); _c1.set(Math.cos(a) * r * 1.12, 0, Math.sin(a) * r * 1.12).applyQuaternion(_q); gb.geo2(BOX1, mat4(x + _c1.x, y + _c1.y, z + _c1.z, rx, ry + -a, 0, r * 0.28, r * 0.33, r * 0.28), col, PB.metal); }
+    gb.geo2(cylG(r * 0.3, r * 0.3, r * 0.4, 10), mat4(x, y, z, rx, ry, 0), steelD, PB.metal);
+  };
+  const pileA = mk(gb => {
+    gb.geo2(BOX1, mat4(0.05, 0.1, 0.02, 0.25, 0.5, 0.18, 0.95, 0.04, 0.6), rust, PB.metal);
+    gb.geo2(BOX1, mat4(0.2, 0.2, -0.12, -0.45, 1.2, 0.25, 0.72, 0.035, 0.46), steel, PB.metal);
+    gb.geo2(BOX1, mat4(-0.25, 0.16, 0.2, 0.6, -0.4, 0.1, 0.5, 0.03, 0.4), red, PB.paint);
+    gb.geo2(cylG(0.06, 0.06, 0.9, 10), mat4(-0.15, 0.2, -0.1, 0, 0.8, Math.PI / 2 - 0.25), steelD, PB.metal);
+    gear(gb, 0.3, 0.3, 0.15, 0.17, 1.1, 0.4, steel);
+    gb.geo2(new T.TorusGeometry(0.22, 0.085, 8, 18), mat4(-0.35, 0.14, -0.3, Math.PI / 2 - 0.25, 0, 0.2), tire, PB.rubber);
+    for (let k = 0; k < 5; k++) gb.geo2(cylG(0.025, 0.025, 0.09, 6), mat4(rand(-0.4, 0.4), 0.05, rand(-0.35, 0.35), rand(0, 3), rand(0, 3), 0), yel, PB.brass);
+  });
+  const pileB = mk(gb => {
+    gb.geo2(BOX1, mat4(0, 0.09, 0, -0.2, 0.3, 0.1, 0.85, 0.05, 0.7), rustD, PB.metal);
+    gb.geo2(BOX1, mat4(-0.15, 0.22, 0.05, 0.5, -0.8, -0.3, 0.6, 0.035, 0.5), blue, PB.paint);
+    gb.geo2(new T.TubeGeometry(new SsHelix(-0.3, 0.3, 0.3, 0.3, 0.2, 0.09, 6), 60, 0.012, 5, false), mat4(0, 0.05, -0.1), steel, PB.metal);
+    gb.geo2(cylG(0.2, 0.2, 0.05, 20), mat4(0.3, 0.3, 0.1, 1.3, 0, 0.3), steel, PB.metal);   // hubcap
+    gb.geo2(sphG(10, 6, 0, Math.PI / 2), mat4(0.3, 0.33, 0.12, 1.3, 0, 0.3, 0.17, 0.07, 0.17), steelD, PB.metal);
+    gear(gb, -0.28, 0.24, -0.2, 0.14, 0.9, -0.6, rust);
+    gb.geo2(cylG(0.05, 0.05, 0.75, 10), mat4(0.1, 0.25, -0.25, 0.5, 0.2, Math.PI / 2), rustD, PB.metal);
+    for (let k = 0; k < 4; k++) gb.geo2(BOX1, mat4(rand(-0.4, 0.4), 0.04, rand(-0.35, 0.35), 0, rand(0, 3), 0, 0.08, 0.04, 0.05), yel, PB.brass);
+  });
+  const bits = mk(gb => {
+    gear(gb, 0, 0.08, 0, 0.11, 1.4, 0.3, steel);
+    gb.geo2(BOX1, mat4(0.15, 0.04, 0.08, 0, 0.6, 0.1, 0.24, 0.03, 0.16), rust, PB.metal);
+    gb.geo2(cylG(0.025, 0.025, 0.14, 6), mat4(-0.12, 0.04, -0.08, 1.5, 0.4, 0), yel, PB.brass);
+  });
+  // gunpowder crate: plank box with steel corners and a hazard flame, lid separate so it can fly off
+  const crateBody = (wood, woodD, band, flame, s) => mk(gb => {
+    gb.geo2(rbox(0.86 * s, 0.56 * s, 0.62 * s, 0.03, 1), mat4(0, 0.28 * s, 0), wood, PB.wood);
+    for (const y of [0.1, 0.46]) gb.geo2(BOX1, mat4(0, y * s, 0, 0, 0, 0, 0.88 * s, 0.05 * s, 0.64 * s), woodD, PB.wood);
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) gb.geo2(BOX1, mat4(x * 0.42 * s, 0.28 * s, z * 0.3 * s, 0, 0, 0, 0.06 * s, 0.58 * s, 0.06 * s), band, PB.metal);
+    for (const z of [-0.312, 0.312]) {
+      gb.geo2(cylG(0.11 * s, 0.11 * s, 0.01, 18), mat4(0, 0.28 * s, z * s, Math.PI / 2, 0, 0), flame, PB.paint);
+      gb.geo2(cylG(0, 0.06 * s, 0.13 * s, 3), mat4(0, 0.3 * s, z * s * 1.02, 0, 0, 0, 1, 1, 0.2), COLS(0x1e1a18), PB.paint);
+    }
+  });
+  const crateLid = (wood, band, s) => mk(gb => { gb.geo2(rbox(0.9 * s, 0.07 * s, 0.66 * s, 0.02, 1), mat4(0, 0, 0), wood, PB.wood); for (const x of [-0.3, 0.3]) gb.geo2(BOX1, mat4(x * s, 0.04 * s, 0, 0, 0, 0, 0.06 * s, 0.02, 0.68 * s), band, PB.metal); });
+  const sack = mk(gb => { gb.geo2(sphG(10, 8), mat4(0, 0.14, 0, 0, 0, 0, 0.17, 0.15, 0.14), COLS(0xb8945a), PB.cloth); gb.geo2(cylG(0.05, 0.07, 0.08, 8), mat4(0, 0.3, 0), COLS(0x9a7a44), PB.cloth); gb.geo2(new T.TorusGeometry(0.055, 0.012, 5, 12), mat4(0, 0.28, 0, Math.PI / 2, 0, 0), COLS(0xd23a2a), PB.cloth); });
+  // glowing crystal cluster
+  const crystal = mk(gb => {
+    const cy = COLS(0x6ff3ff), cyD = COLS(0x2ab8e8), oct = new T.OctahedronGeometry(1, 0);
+    [[0, 0.32, 0, 0.11, 0.34, 0.11, 0, 0], [0.12, 0.2, 0.05, 0.07, 0.22, 0.07, 0.4, 0.2], [-0.1, 0.18, -0.06, 0.07, 0.2, 0.07, -0.45, -0.1], [0.04, 0.15, -0.13, 0.06, 0.16, 0.06, -0.2, 0.5], [-0.06, 0.13, 0.12, 0.05, 0.14, 0.05, 0.3, -0.5]]
+      .forEach(([x, y, z, sx, sy, sz, rz, rx], i) => gb.geo2(oct, mat4(x, y, z, rx, i, rz, sx, sy, sz), i % 2 ? cyD : cy, [0.15, 0.2, 2.6]));
+    gb.geo2(sphG(10, 6, 0, Math.PI / 2), mat4(0, 0, 0, 0, 0, 0, 0.2, 0.06, 0.2), COLS(0x5d6078), PB.conc);
+  });
+  scvKit = {
+    piles: [pileA, pileB], bits, sack, crystal,
+    crate: crateBody(COLS(0xb07a40), COLS(0x7a4a22), COLS(0x3a3e4a), COLS(0xff7a2a), 1), lid: crateLid(COLS(0xb07a40), COLS(0x3a3e4a), 1),
+    gold: crateBody(COLS(0xf2c33a), COLS(0xc88a1a), COLS(0xfff2c0), COLS(0xff4a3a), 1.3), goldLid: crateLid(COLS(0xf2c33a), COLS(0xfff2c0), 1.3)
+  };
+}
+function scvSpark(color, scale, op) { return new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: op || 0.8, toneMapped: false })); }
+// k: pile | crate | crystal | gold | drop
+function scvAddNode(k, x, z, items, y) {
+  scvKitBuild();
+  const g = new T.Group(), fy = y !== undefined ? y : scvFloorY(x, z);
+  g.position.set(x, fy, z); g.rotation.y = rand(0, TAU);
+  const n = { k, x, z, y: fy, items: Object.assign({ scrap: 0, powder: 0, crystal: 0 }, items), g, pry: 0, need: k === 'gold' ? 2 : 1, open: k !== 'crate' && k !== 'gold', done: false, ph: rand(0, TAU), lid: null, inside: null, ring: null, spark: null, beam: null, pop: 0 };
+  if (k === 'pile') gbMesh(scvKit.piles[Math.floor(Math.random() * 2)], g).scale.setScalar(rand(1.0, 1.25));
+  else if (k === 'drop') { gbMesh(scvKit.bits, g); g.scale.setScalar(1.3); }
+  else if (k === 'crystal') { gbMesh(scvKit.crystal, g, false); g.scale.setScalar(1.6); const h = scvSpark(0x6ff3ff, 1, 0.55); h.position.y = 0.3; h.scale.setScalar(1.6); g.add(h); n.halo = h; }
+  else {
+    const gold = k === 'gold', s = gold ? 1.3 : 1;
+    gbMesh(gold ? scvKit.gold : scvKit.crate, g);
+    n.lid = gbMesh(gold ? scvKit.goldLid : scvKit.lid, g); n.lid.position.y = 0.595 * s;
+    n.inside = new T.Group(); g.add(n.inside);
+    for (let i = 0; i < 3; i++) { const m = gbMesh(scvKit.sack, n.inside); m.position.set((i - 1) * 0.22 * s, 0.22 * s, rand(-0.08, 0.08)); m.rotation.y = rand(0, TAU); }
+    if (gold) { const m = gbMesh(scvKit.crystal, n.inside, false); m.position.set(0, 0.3, 0); m.scale.setScalar(0.9); }
+    n.inside.visible = false;
+    // the pry ring: fills up while you stand by the crate
+    const rg = new T.Mesh(new T.RingGeometry(0.98, 1.1, 48, 1, 0, TAU), new T.MeshBasicMaterial({ color: gold ? 0xffd23a : 0xffa04a, transparent: true, opacity: 0.0, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, toneMapped: false }));
+    rg.rotation.x = -Math.PI / 2; rg.position.y = 0.04; rg.scale.setScalar(1.25 * s); g.add(rg); n.ring = rg;
+    if (gold) {
+      const h = scvSpark(0xffd23a, 1, 0.6); h.position.y = 0.6; h.scale.setScalar(3.2); g.add(h); n.halo = h;
+      const b = new T.Mesh(scvBeamM.geometry, scvBeamM.material.clone()); b.material.color.set(0xffc23a); b.material.opacity = 0.24; b.scale.set(0.5, 0.75, 0.5); b.position.y = 12.5; g.add(b); n.beam = b;
+    }
+  }
+  const sp = scvSpark(k === 'gold' ? 0xffe27a : k === 'crystal' ? 0xbaffff : 0xffffff, 1, 0.9); sp.position.y = k === 'crystal' ? 0.6 : 0.55; sp.scale.setScalar(0.5); g.add(sp); n.spark = sp;
+  ssScene.add(g); scvNodes.push(n); return n;
+}
+function gbMesh(geo, parent, cast) { const m = new T.Mesh(geo, SSM.pbr); m.castShadow = cast !== false; m.receiveShadow = true; parent.add(m); return m; }
+function scvClearNodes() { for (const n of scvNodes) ssScene.remove(n.g); scvNodes.length = 0; }
+const scvNodeLeft = n => n.items.scrap + n.items.powder + n.items.crystal;
+
+// where the loot goes each dawn: scrap round the barn, gunpowder crates out in the fields, crystals in the crypt, one golden crate somewhere risky
+function scvSpotOK(x, z, pad) {
+  if (Math.hypot(x, z) < 9 || Math.hypot(x, z) > 90) return false;
+  for (const o of SCV_COL.circles) if (Math.hypot(x - o.x, z - o.z) < o.r + pad) return false;
+  for (const b of SCV_COL.boxes) { scvToLocal(b, x, z, _cl); if (Math.abs(_cl[0]) < b.hx + pad && Math.abs(_cl[1]) < b.hz + pad) return false; }
+  if (Math.hypot(x - SCV_LAD.ring.x, z - SCV_LAD.ring.z) < 7) return false;
+  for (const n of scvNodes) if (Math.hypot(x - n.x, z - n.z) < (n.k === 'crate' ? 9 : 2.2)) return false;
+  return true;
+}
+function scvPlaceLoot(N) {
+  scvClearNodes();
+  const barn = SS.barn, bt = barn.rotation.y, bc = Math.cos(bt), bs = Math.sin(bt);
+  const B = (lx, lz) => [barn.position.x + lx * bc + lz * bs, barn.position.z - lx * bs + lz * bc];
+  const barnSpots = [[-3.8, 9.3], [3.6, 9.1], [7.3, 3.2], [-7.3, -2.2], [7.3, -4.6], [-7.3, 4.4], [0.4, -9.4], [-4.2, -9.2], [4.4, -9.4], [9.5, 8.6]];
+  for (let i = barnSpots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [barnSpots[i], barnSpots[j]] = [barnSpots[j], barnSpots[i]]; }
+  let piles = 0;
+  for (const [lx, lz] of barnSpots) { if (piles >= 5) break; const [x, z] = B(lx + rand(-0.6, 0.6), lz + rand(-0.6, 0.6)); if (!scvSpotOK(x, z, 0.8)) continue; scvAddNode('pile', x, z, { scrap: Math.random() < 0.5 ? 2 : 3 }); piles++; }
+  // one by the silo, one behind the farmhouse
+  for (const [x, z] of [[27.5, -73.5], [57, -31]]) if (scvSpotOK(x, z, 0.6)) scvAddNode('pile', x, z, { scrap: 2 });
+  // crates in the open fields, spread out
+  let crates = 0;
+  for (let tries = 0; crates < 5 && tries < 400; tries++) {
+    const a = rand(0, TAU), r = rand(16, 56), x = Math.cos(a) * r, z = Math.sin(a) * r;
+    const gl = scvGraveLocal(x, z); if (Math.abs(gl[0]) < 18 && Math.abs(gl[1]) < 14) continue;   // not in the graveyard
+    if (x > 24 && x < 68 && z < -20 && z > -62) continue;                                          // nor the farm yard
+    if (!scvSpotOK(x, z, 1.2)) continue;
+    scvAddNode('crate', x, z, { powder: Math.random() < 0.5 ? 2 : 3, scrap: Math.random() < 0.3 ? 1 : 0 }); crates++;
+  }
+  // crystals on the sarcophagus inside the crypt
+  const nc = N >= 2 ? 2 : 1;
+  for (let i = 0; i < nc; i++) { const [x, z] = scvCrypt(-1.25, i ? -0.5 : 0.45); scvAddNode('crystal', x, z, { crystal: 1 }, SCV_CRYPT.y + 1.37); }
+  // the golden crate: somewhere you have to work for
+  const goldSpots = [scvGrave(-12, -8), scvGrave(-12, 8), [60, -44], [-6, -78], [74, 12], [-30, -66], [12, 76]];
+  for (let tries = 0; tries < 20; tries++) { const [x, z] = goldSpots[Math.floor(Math.random() * goldSpots.length)]; if (!scvSpotOK(x, z, 1.4)) continue; scvAddNode('gold', x, z, { scrap: 4, powder: 3, crystal: 1 }); break; }
+}
+
+// ---------- Stragglers: smouldering zombies that got caught in shade when the sun came up ----------
+function scvPlumeTake(zb) {
+  let p = scvPlumes.find(q => !q.zb);
+  if (!p) {
+    const smoke = new T.Sprite(new T.SpriteMaterial({ map: TEX.puff, color: 0x3a3236, transparent: true, opacity: 0.4, depthWrite: false }));
+    const glow = scvSpark(0xff7a2a, 1, 0.3);
+    ssScene.add(smoke, glow); p = { smoke, glow, zb: null, ph: 0, emb: 0 }; scvPlumes.push(p);
+  }
+  p.zb = zb; p.ph = rand(0, TAU); p.smoke.visible = p.glow.visible = true; zb.plume = p; return p;
+}
+function scvPlumesUpdate(dt) {
+  for (const p of scvPlumes) {
+    const z = p.zb; if (!z) continue;
+    if (z.state === 'dead' && z.deadT > 1.4 || !scv.on) { p.zb = null; p.smoke.visible = p.glow.visible = false; continue; }
+    const vis = z.state !== 'buried' && z.m.root.visible; p.smoke.visible = p.glow.visible = vis; if (!vis) continue;
+    const ty = ZTYPES[z.type], h = ty.top * (ty.scale || 1), dead = z.state === 'dead' ? 0.4 : 1;
+    p.ph += dt * 1.6;
+    p.smoke.position.set(z.x + Math.sin(p.ph) * 0.12, z.y + h + 0.35 + Math.sin(p.ph * 0.7) * 0.08, z.z + Math.cos(p.ph * 0.8) * 0.12);
+    p.smoke.scale.setScalar((0.9 + Math.sin(p.ph * 1.3) * 0.15) * dead); p.smoke.material.rotation = p.ph * 0.3;
+    p.glow.position.set(z.x, z.y + h * 0.6, z.z); p.glow.scale.setScalar(1.3 * dead); p.glow.material.opacity = (0.22 + Math.sin(p.ph * 3) * 0.06) * dead;
+    p.emb -= dt; if (p.emb <= 0 && z.state !== 'dead') { p.emb = rand(0.35, 0.7); ssSprite(z.x + rand(-0.2, 0.2), z.y + rand(0.5, h), z.z + rand(-0.2, 0.2), 0xffa04a, 0.1, 0.02, rand(0.5, 0.9), rand(-0.3, 0.3), rand(0.8, 1.6), rand(-0.3, 0.3), 1); }
+  }
+}
+// regions, so a hunting zombie finds the graveyard gate and the crypt door: 0 outside, 1 in the graveyard, 2 inside the crypt
+function scvRegion(x, z) {
+  const g = scvGraveLocal(x, z); if (Math.abs(g[0]) > 15 || Math.abs(g[1]) > 11) return 0;
+  const c = scvCryptLocal(x, z); if (c[0] > -2.05 && c[0] < 1.5 && Math.abs(c[1]) < 2.15) return 2;
+  return 1;
+}
+const SCV_WP = {};
+function scvWaypoints() {
+  SCV_WP.A = scvGrave(19.5, 0); SCV_WP.I = scvGrave(13, 0); SCV_WP.C1 = scvCrypt(3.3, 0); SCV_WP.C2 = scvCrypt(0.4, 0);
+  SCV_WP.chain = { '01': ['A', 'I'], '02': ['A', 'I', 'C1', 'C2'], '10': ['I', 'A'], '12': ['C1', 'C2'], '21': ['C2', 'C1'], '20': ['C2', 'C1', 'I', 'A'] };
+}
+function scvSpawnStraggler(spot, mode) {
+  const N = scv.N, type = N >= 2 && Math.random() < (N >= 3 ? 0.4 : 0.28) ? 'runner' : 'walker';
+  const zb = ssSpawnZombie(type, 'woods'), m = zb.m;
+  zb.x = spot[0]; zb.z = spot[1]; zb.y = scvFloorY(zb.x, zb.z);
+  zb.hunt = true; zb.hp = zb.maxHp = SCV_ZHP[type](N);
+  zb.speed = type === 'runner' ? rand(4.5, 5.1) : rand(1.9, 2.4);
+  zb.face = Math.atan2(zb.x - scv.x, zb.z - scv.z) + rand(-1, 1); zb.wp = null; zb.wpKey = ''; zb.best = 1e9; zb.stuckT = 0; zb.ghostT = 0; zb.dropped = false;
+  zb.state = mode; zb.rise = mode === 'rise' ? 0 : 1; zb.atk = 0; zb.groanT = rand(2, 6);
+  m.root.visible = mode !== 'buried';
+  m.root.position.set(zb.x, zb.y - (mode === 'rise' ? 1.75 : 0), zb.z); m.root.rotation.y = zb.face;
+  if (mode === 'rise') ssDirt(zb.x, zb.y, zb.z, 12);
+  scvPlumeTake(zb);
+  return zb;
+}
+function scvShadeSpots() {
+  const barn = SS.barn, bt = barn.rotation.y, bc = Math.cos(bt), bs = Math.sin(bt), house = SS.house, ht = house.rotation.y;
+  const B = (lx, lz) => [barn.position.x + lx * bc + lz * bs, barn.position.z - lx * bs + lz * bc];
+  const H = (lx, lz) => [house.position.x + lx * Math.cos(ht) + lz * Math.sin(ht), house.position.z - lx * Math.sin(ht) + lz * Math.cos(ht)];
+  const spots = { barn: [], grave: [], woods: [], crypt: [scvCrypt(-0.6, 1.3)] };
+  for (const [lx, lz] of [[-3, -9], [2, -9.5], [7.6, -2], [-7.6, 1], [7.4, 5], [-7.5, -5], [-1, -10.5]]) spots.barn.push(B(lx, lz));
+  for (const [lx, lz] of [[-3, -5.5], [2, -5.6], [4.5, -6]]) spots.barn.push(H(lx, lz));
+  for (const g of SS_GRAVES) spots.grave.push([g.x, g.z]);
+  for (let k = 0; k < 24; k++) {
+    const a = rand(0, TAU), r = rand(58, 72), x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (Math.abs(angDiff(a, SS_GRAVE_C.a)) < 0.45) continue;
+    spots.woods.push([x, z]);
+  }
+  return spots;
+}
+function scvSpawnInitial() {
+  const S = scvShadeSpots(), cap = scv.cap, pick = list => list.splice(Math.floor(Math.random() * list.length), 1)[0];
+  const ok = s => s && Math.hypot(s[0] - SCV_LAD.ring.x, s[1] - SCV_LAD.ring.z) > 24;
+  let n = 0;
+  scvSpawnStraggler(S.crypt[0], 'idle'); n++;   // one lurks in the crypt, by the crystals
+  const plan = [['barn', 0.4], ['grave', 0.3], ['woods', 0.3]];
+  for (const [k, f] of plan) {
+    const want = Math.max(1, Math.round((cap - 1) * f));
+    for (let i = 0; i < want && n < cap && S[k].length; i++) { const s = pick(S[k]); if (!ok(s)) { i--; continue; } scvSpawnStraggler(s, k === 'grave' ? 'buried' : Math.random() < 0.35 ? 'walk' : 'idle'); n++; }
+  }
+  while (n < cap && S.woods.length) { const s = pick(S.woods); if (ok(s)) { scvSpawnStraggler(s, 'walk'); n++; } }
+}
+// more crawl out of the shade to replace the fallen, never more than the cap
+function scvSpawner(dt) {
+  let alive = 0; for (const z of ssZombies) if (z.state !== 'dead') alive++;
+  scv.spawnT -= dt;
+  if (alive >= scv.cap || scv.spawnT > 0) return;
+  const S = scvShadeSpots(), all = [...S.barn, ...S.woods, ...S.grave].filter(s => { const d = Math.hypot(s[0] - scv.x, s[1] - scv.z); return d > 24 && d < 70 && Math.hypot(s[0] - SCV_LAD.ring.x, s[1] - SCV_LAD.ring.z) > 14; });
+  if (!all.length) { scv.spawnT = 1; return; }
+  const s = all[Math.floor(Math.random() * all.length)], grave = S.grave.includes(s);
+  const zb = scvSpawnStraggler(s, grave ? 'rise' : 'walk'); zb.awake = true;
+  scv.spawnT = rand(3, 5.5) * (alive < scv.cap * 0.5 ? 0.6 : 1);
+}
+function scvWake(zb) {
+  if (zb.state === 'idle') { zb.state = 'walk'; ssGroan(zb); }
+  else if (zb.state === 'buried') { zb.state = 'rise'; zb.rise = 0; zb.m.root.visible = true; ssDirt(zb.x, zb.y, zb.z, 14); sfx('ignite', 30); }
+}
+// a gunshot carries: everything dormant nearby comes for you
+function scvAlert(x, z, R) { for (const zb of ssZombies) if ((zb.state === 'idle' || zb.state === 'buried') && Math.hypot(zb.x - x, zb.z - z) < R) scvWake(zb); }
+const _zp = { x: 0, z: 0 };
+// one straggler's turn: dormant until it sees or hears you, then it hunts you down (through the graveyard gate and the crypt door if it has to)
+function scvZombie(zb, dt) {
+  const m = zb.m, ty = ZTYPES[zb.type], sc = ty.scale || 1;
+  zb.flinch = Math.max(0, zb.flinch - dt * 5);
+  if (zb.state === 'dead') {
+    if (!zb.dropped) { zb.dropped = true; if (scv.on) setTimeout(() => { if (scv.on) scvAddNode('drop', zb.x + rand(-0.3, 0.3), zb.z + rand(-0.3, 0.3), { scrap: 1 }); }, 450); }
+    zb.deadT += dt; poseZombie(zb, dt); m.eyes.visible = false;
+    if (zb.deadT > 1.5) { if (!zb.poofed) { zb.poofed = true; ssPoof(zb.x, zb.y + 0.6 * sc, zb.z, sc); } m.root.position.y = zb.y - Math.min(1, (zb.deadT - 1.5) / 0.6) * 1.4 * sc; }
+    return zb.deadT > 2.2;
+  }
+  const dx = scv.x - zb.x, dz = scv.z - zb.z, dPl = Math.hypot(dx, dz);
+  if (zb.state === 'buried') { if (scv.ph === 'free' && dPl < 13) scvWake(zb); return false; }
+  if (zb.state === 'rise') {
+    zb.rise = Math.min(1, zb.rise + dt / 1.5); zb.ph += dt * 3;
+    m.root.position.set(zb.x, zb.y - (1 - zb.rise) * 1.75 * sc, zb.z); m.root.rotation.y = zb.face;
+    if (Math.random() < dt * 5) ssDirt(zb.x, zb.y, zb.z, 3);
+    if (zb.rise >= 1) zb.state = 'walk';
+    poseZombie(zb, dt); return false;
+  }
+  if (zb.state === 'idle') {
+    zb.ph += dt * 0.9;
+    if (scv.ph === 'free' && (dPl < 15 || (dPl < 26 && scv.sprint))) scvWake(zb);
+    zb.face += clamp(angDiff(Math.atan2(-dx, -dz), zb.face), -0.4 * dt, 0.4 * dt);
+    m.root.position.set(zb.x, zb.y, zb.z); m.root.rotation.y = zb.face; poseZombie(zb, dt); return false;
+  }
+  const reach = ty.rad * sc + SCV_R + 0.5;
+  if (zb.state === 'walk') {
+    // next waypoint toward you
+    const rz = scvRegion(zb.x, zb.z), rp = scvRegion(scv.x, scv.z), key = '' + rz + rp;
+    if (key !== zb.wpKey) { zb.wpKey = key; zb.wp = rz === rp ? null : SCV_WP.chain[key].slice(); }
+    let tx = scv.x, tz = scv.z, avoid = null;
+    if (zb.wp && zb.wp.length) {
+      const w = SCV_WP[zb.wp[0]]; tx = w[0]; tz = w[1];
+      if (Math.hypot(tx - zb.x, tz - zb.z) < 1.3) { zb.wp.shift(); zb.best = 1e9; if (!zb.wp.length) zb.wp = null; }
+      if (zb.wp[0] === 'A' && rz === 0) avoid = { x: SS_GRAVE_C.x, z: SS_GRAVE_C.z, r: 18.4 };
+      else if (zb.wp[0] === 'C1' && rz === 1) avoid = { x: SCV_CRYPT.x, z: SCV_CRYPT.z, r: 3.8 };
+    }
+    const dt2 = Math.hypot(tx - zb.x, tz - zb.z) || 0.01;
+    let ux = (tx - zb.x) / dt2, uz = (tz - zb.z) / dt2;
+    const w = Math.sin(zb.ph * 0.23 + zb.seed) * (dt2 > 10 ? 0.3 : 0.05); ux += uz * w; uz -= ux * w;
+    const rad = ty.rad * sc, ghost = zb.ghostT > 0; if (ghost) zb.ghostT -= dt;
+    // steer round trees, rocks and (when heading for a gate or door) the graveyard and the crypt
+    const steer = o => { const ox = zb.x - o.x, oz = zb.z - o.z, R = o.r + rad + 1.2; if (ox > R || ox < -R || oz > R || oz < -R) return; const od = Math.hypot(ox, oz); if (od < R && od > 0.01) { const k = (R - od) / R * 2.6, side = (ox * uz - oz * ux) > 0 ? 1 : -1; ux += ox / od * k + uz * k * 0.6 * side; uz += oz / od * k - ux * k * 0.6 * side; } };
+    for (const o of SCV_COL.circles) steer(o);
+    if (avoid && Math.hypot(zb.x - tx, zb.z - tz) > 6) steer(avoid);
+    const L = Math.hypot(ux, uz) || 1; ux /= L; uz /= L;
+    const sp = zb.speed * (1 - zb.flinch * 0.7);
+    _zp.x = zb.x + ux * sp * dt; _zp.z = zb.z + uz * sp * dt; scvCollide(_zp, rad, ghost); zb.x = _zp.x; zb.z = _zp.z;
+    if (dt2 < zb.best - 0.8) { zb.best = dt2; zb.stuckT = 0; } else if ((zb.stuckT += dt) > 2.5) { zb.ghostT = 1.6; zb.stuckT = 0; zb.best = dt2; }
+    zb.face += clamp(angDiff(Math.atan2(-ux, -uz), zb.face), -5 * dt, 5 * dt);
+    zb.ph += dt * (zb.type === 'runner' ? 9.5 : 2.2 + sp * 1.3);
+    if (dPl < reach && scv.ph === 'free') { zb.state = 'attack'; zb.atk = 0; }
+  } else if (zb.state === 'attack') {
+    zb.face += clamp(angDiff(Math.atan2(-dx, -dz), zb.face), -6 * dt, 6 * dt);
+    const before = zb.atk; zb.atk += dt;
+    if (before < zb.rate * 0.3 && zb.atk >= zb.rate * 0.3 && dPl < reach + 0.45 && scv.ph === 'free') scvHurt(SCV_ZDMG[zb.type] * (1 + (scv.N - 1) * 0.08), zb);
+    if (zb.atk >= zb.rate) { zb.atk -= zb.rate; if (dPl > reach + 0.4 || scv.ph !== 'free') zb.state = 'walk'; }
+    zb.ph += dt;
+  }
+  zb.y = scvFloorY(zb.x, zb.z);
+  m.root.position.set(zb.x, zb.y, zb.z); m.root.rotation.y = zb.face;
+  zb.groanT -= dt; if (zb.groanT <= 0) { zb.groanT = rand(3, 8); scvGroan(zb); }
+  poseZombie(zb, dt);
+  return false;
+}
+function scvGroan(zb) { const d = Math.hypot(zb.x - scv.x, zb.z - scv.z); if (d < 45) ssGroan(Object.assign({}, zb, { x: zb.x - scv.x, z: zb.z - scv.z })); }
+// keep them off you (they claw, they don't overlap)
+function scvPushOff() {
+  for (const z of ssZombies) {
+    if (z.state === 'dead' || z.state === 'buried' || z.state === 'rise') continue;
+    const ty = ZTYPES[z.type], R = ty.rad * (ty.scale || 1) + SCV_R, dx = z.x - scv.x, dz = z.z - scv.z, d = Math.hypot(dx, dz);
+    if (d < R && d > 1e-4) { const p = (R - d); z.x += dx / d * p * 0.75; z.z += dz / d * p * 0.75; scv.x -= dx / d * p * 0.25; scv.z -= dz / d * p * 0.25; }
+  }
+}
+function scvHurt(dmg, zb) {
+  if (scv.ph !== 'free') return;
+  scv.hp = Math.max(0, scv.hp - dmg); scv.hurt = 1; scv.shake = Math.max(scv.shake, 0.32); scv.lastHit = time;
+  const cdx = zb.x - camera.position.x, cdz = zb.z - camera.position.z, c = Math.cos(player.yaw), s2 = Math.sin(player.yaw), ang = Math.atan2(cdx * c - cdz * s2, -(cdx * s2 + cdz * c));
+  const el = dmgEls[dmgI = (dmgI + 1) % dmgEls.length]; el.style.transform = 'rotate(' + ang.toFixed(3) + 'rad)'; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  sfx('hurt'); sfx('claw'); rumble(0.6, 0.6, 160);
+  if (scv.hp <= 0) scvEnd('down');
+}
+
+// ---------- The revolver: built like the tower guns, held one-handed with the other cupping the grip ----------
+function scvGunSetup() {
+  if (scvRig) return;
+  const keep = [C.glove, C.sleeve, C.cuff];
+  C.glove = COLS(0x2b2d38); C.sleeve = COLS(0x3a6cc4); C.cuff = COLS(0xf0a22e);
+  const rig = ssRig('Barn Burner'), p = new Painter(), g = new Painter(), cyl = new Painter(), cg = new Painter(), ham = new Painter(), ld = new Painter();
+  const blue = COLS(0x3a4254), steel = COLS(0x7c8698), dark = COLS(0x16181e), brass = COLS(0xd9a441), wal = COLS(0x8e4a22), walD = COLS(0x5a2c12), amber = COLS(0xffc46a);
+  const by = 0.024;
+  p.cz(0.0125, 0.0145, 0.18, 0, by, -0.165, blue, PBM.steel, 18);
+  p.ring(0.0128, 0.003, 0, by, -0.256, steel, PBM.steel);
+  p.cz(0.0055, 0.0055, 0.004, 0, by, -0.257, dark, PBM.steel, 12);
+  p.rb(0.013, 0.012, 0.17, 0.004, 0, by + 0.016, -0.168, 0, 0, 0, blue, PBM.steel);
+  p.rb(0.017, 0.018, 0.1, 0.006, 0, by - 0.019, -0.12, 0, 0, 0, blue, PBM.steel);
+  p.cz(0.004, 0.004, 0.02, 0, by - 0.019, -0.172, steel, PBM.steel, 8);
+  p.rb(0.005, 0.017, 0.014, 0.002, 0, by + 0.029, -0.245, 0, 0, 0, blue, PBM.steel);
+  g.geo(sphG(8, 6), mat4(0, by + 0.039, -0.244, 0, 0, 0, 0.0045, 0.0045, 0.0045), amber);
+  // frame round the cylinder window, top strap, recoil shield, rear notch
+  p.rb(0.022, 0.011, 0.078, 0.003, 0, by + 0.014, -0.05, 0, 0, 0, blue, PBM.steel);
+  p.rb(0.03, 0.014, 0.085, 0.004, 0, -0.024, -0.045, 0, 0, 0, blue, PBM.steel);
+  p.rb(0.034, 0.052, 0.014, 0.004, 0, 0.004, -0.006, 0, 0, 0, blue, PBM.steel);
+  p.rb(0.03, 0.04, 0.012, 0.004, 0, 0.006, -0.092, 0, 0, 0, blue, PBM.steel);
+  for (const sx of [-1, 1]) p.rb(0.005, 0.009, 0.012, 0.002, sx * 0.0055, by + 0.024, 0.0, 0, 0, 0, blue, PBM.steel);
+  // grip: a rounded walnut bird's-head with checkered panels and a brass cap
+  p.ext([[-0.006, -0.012], [0.026, -0.016], [0.052, -0.056], [0.066, -0.104], [0.058, -0.128], [0.02, -0.13], [0.0, -0.09], [-0.012, -0.045]], 0.034, 0, wal, PBM.poly);
+  for (const sx of [-1, 1]) for (let k = 0; k < 4; k++) p.bx(0.003, 0.012, 0.022, sx * 0.0172, -0.06 - k * 0.014, 0.02 + k * 0.008, walD, PBM.poly, -0.35, 0, 0);
+  p.rb(0.036, 0.012, 0.045, 0.005, 0, -0.131, 0.038, -0.1, 0, 0, brass, PBM.brass);
+  trigger(p, -0.012, -0.026, steel);
+  // the cylinder: flutes, chambers at the front, brass case heads at the back
+  cyl.cz(0.026, 0.026, 0.056, 0, 0, 0, steel, PBM.steel, 24);
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * TAU + TAU / 16, ca = Math.cos(a), sa = Math.sin(a);
+    cyl.bx(0.007, 0.004, 0.04, ca * 0.0255, sa * 0.0255, 0.004, blue, PBM.steel, 0, 0, a + Math.PI / 2);
+    const b = k / 8 * TAU, cb = Math.cos(b) * 0.0165, sb = Math.sin(b) * 0.0165;
+    cyl.cz(0.0058, 0.0058, 0.004, cb, sb, -0.0282, dark, PBM.steel, 10);
+    cg.cz(0.0062, 0.0062, 0.003, cb, sb, 0.0288, brass, null, 10);
+  }
+  cyl.ring(0.0262, 0.0022, 0, 0, -0.027, blue, PBM.steel); cyl.ring(0.0262, 0.0022, 0, 0, 0.027, blue, PBM.steel);
+  // hammer: cocks back between shots
+  ham.rb(0.009, 0.03, 0.012, 0.003, 0, 0.012, 0, 0, 0, 0, blue, PBM.steel);
+  ham.rb(0.014, 0.007, 0.018, 0.002, 0, 0.028, 0.007, 0.3, 0, 0, steel, PBM.steel);
+  // speedloader: a brass ring of fresh rounds that comes up during a reload
+  ld.cz(0.022, 0.022, 0.014, 0, 0, 0.012, dark, PBM.poly, 18);
+  for (let k = 0; k < 8; k++) { const b = k / 8 * TAU; ld.cz(0.0055, 0.0055, 0.03, Math.cos(b) * 0.0165, Math.sin(b) * 0.0165, -0.01, brass, PBM.brass, 8); }
+  ld.cy(0.006, 0.02, 0, 0, 0.026, steel, PBM.steel);
+  handR(p, 0, -0.072, 0.034, -0.26, 1.0); handCup(p, -0.004, -0.08, 0.026, -0.26);
+  rig.muzzle.set(0, by, -0.264); rig.hip = [0.11, -0.095, -0.33]; rig.ads = [0, 0.061, 0.33];
+  ssFinishRig(rig, p, g, [['cyl', cyl, cg], ['ham', ham, null], ['ld', ld, null]]);
+  rig.parts.cyl.position.set(0, 0.006, -0.05); rig.parts.ham.position.set(0, by + 0.002, 0.008); rig.parts.ld.visible = false;
+  ssHalo(rig, 0, by + 0.039, -0.244, 0.03, 0xffc46a, 0.55);
+  rig.root.visible = false;
+  [C.glove, C.sleeve, C.cuff] = keep;
+  scvRig = rig;
+}
+
+// ---------- Flow ----------
+function scvBuild() {
+  if (scvBuilt) return;
+  scvBuilt = true;
+  scvBuildColliders(); scvWaypoints(); scvLadderSetup(); scvGunSetup(); scvKitBuild();
+}
+// from the dawn card: lower the ladder and go
+function ssScavStart() {
+  if (state !== 'won' || scv.on) return;
+  scvBuild(); audioInit();
+  ssDawnStage = 2;   // this dawn's scavenge is used up, even if you quit halfway (banked parts are kept)
+  ssSave(ssWave + 1, ssTowerMax);
+  for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
+  for (const b of ssBurns) { b.on = false; b.z = null; b.g.visible = false; }
+  scv.N = ssWonNight || ssNightOf(ssWave); scv.cap = Math.min(15, 3 + 3 * scv.N);
+  Object.assign(scv, { on: true, ph: 'down', t: 0, left: SCV_T, hp: 100, hurt: 0, lastHit: -9, bag: [], lost: 0, why: '', warned: false, ring: false, sprint: false, kills: 0, tick: -1,
+    ammo: SCV_GUN.mag, cd: 0, rel: 0, relP: 0, adsT: 0, adsE: 0, kick: 0, rec: 0, recY: 0, shake: 0, flashT: 0, ham: 0.5, cylA: 0, cylTo: 0, raise: 0, prying: null, fullT: 0, spawnT: 6, vx: 0, vz: 0, fade: 0, bagKey: '', snapZ: null, snapT: 0,
+    thud: false, landed: false, rungN: -1, runE: 0, move: 0, bob: 0, stepAcc: 0, prevAdsPad: false, warnT: 0 });
+  scv.bank = { scrap: 0, powder: 0, crystal: 0 };
+  scv.yaw0 = player.yaw; scv.pitch0 = player.pitch; scv.cam0.copy(camera.position);
+  scv.x = SCV_LAD.ring.x; scv.z = SCV_LAD.ring.z; scv.y = SCV_LAD.ring.y;
+  scvPlaceLoot(scv.N); scvSpawnInitial();
+  scvLadder.visible = true; scvLadderPose(0); scvRingM.visible = scvBeamM.visible = scvStash.visible = true; scvStashFill();
+  ssReloadT = 0; ssSwapT = 0; ssChargeT = 0; adsToggle = false; ssAdsT = ssAdsE = 0; ssScoped = false; ssScopeEl.style.opacity = 0; ssNadeCancel(); ssWheelCancel();
+  for (const d of SNIPERS) d.rig.root.visible = false;
+  document.body.classList.add('scav');
+  $('keys').textContent = 'WASD move · Shift run · Click fire · Right-click aim · R reload · Space climb up at the ladder · Esc pause';
+  padKeysEl.innerHTML = '<b>Left stick</b> move, <b>L3</b> run · <b>R2</b> fire · <b>L2</b> aim · <b>□</b> reload · <b>✕</b> climb up at the ladder · <b>Options</b> pause';
+  state = 'play'; card.hidden = true; hud.hidden = false; for (const k in hudCache) delete hudCache[k];
+  releaseInputs(); keepAwake(); wantLock();
+  banner('Scavenge!', 'One minute. Grab parts, get back up', 2.6);
+  sfx('ladderDrop');
+}
+function scvAbort() {   // quitting, a new run, or the menu
+  if (scvBuilt) { scvLadder.visible = scvRingM.visible = scvBeamM.visible = scvStash.visible = false; scvRig.root.visible = false; }
+  scvClearNodes(); for (const p of scvPlumes) { p.zb = null; p.smoke.visible = p.glow.visible = false; }
+  if (scv.on) { $('keys').textContent = SS_KEYS; padKeysEl.innerHTML = SS_PAD_LEGEND; }
+  scv.on = false; scv.ph = 'off'; document.body.classList.remove('scav'); scvFadeEl.style.opacity = 0;
+}
+function scvEnd(why) {
+  if (scv.ph !== 'free') return;
+  scv.why = why; scv.t = 0; adsToggle = false; scv.prying = null;
+  if (why === 'climb') { scv.ph = 'up'; sfx('rung'); }
+  else {
+    scv.lost = scv.bag.length;
+    if (scv.lost) for (const k of scv.bag) ssSprite(scv.x + rand(-0.5, 0.5), scv.y + 0.4, scv.z + rand(-0.5, 0.5), SCV_ITEM[k].hex, 0.25, 0.05, 0.8, rand(-1.5, 1.5), rand(1, 3), rand(-1.5, 1.5), 1, 7);
+    scv.bag = [];
+    scv.ph = 'out';
+    banner(why === 'time' ? 'Out of time' : 'Knocked down', scv.lost ? 'You dropped ' + scv.lost + (scv.lost === 1 ? ' item' : ' items') : 'Your banked parts are safe', 2.8);
+    sfx(why === 'time' ? 'hurry' : 'knock'); rumble(0.9, 0.9, 500);
+  }
+}
+// back on the deck: the workbench card
+function scvFinish() {
+  scvAbort();
+  for (const z of ssZombies) ssRemoveZombie(z); ssZombies.length = 0;
+  scvLadder.visible = true; scvLadderPose(1);
+  ssPx = ssPz = 0; ssLeanX = ssLeanZ = 0; player.pitch = 0.1;
+  state = 'won'; hud.hidden = true; releaseInputs(); adsToggle = false; vig.style.opacity = '0';
+  if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+  ssDawnStage = 2; ssSave(ssWave + 1, ssTowerMax);
+  ssBenchSummary = { banked: Object.assign({}, scv.bank), lost: scv.lost, why: scv.why, kills: scv.kills };
+  showCard('bench');
+  scvFadeEl.style.opacity = 1; requestAnimationFrame(() => requestAnimationFrame(() => { scvFadeEl.style.opacity = 0; }));
+}
+
+// ---------- Per frame ----------
+const smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
+function scvDown(dt) {
+  const t = scv.t, yawL = SS_TROT, yawOut = SS_TROT + Math.PI;
+  if (t < 0.6) {   // the ladder tips over the railing while you watch from the deck
+    const k = t / 0.6; scvLadderPose(k * k);
+    _c1.copy(SCV_LAD.top); const ty = Math.atan2(-(_c1.x - scv.cam0.x), -(_c1.z - scv.cam0.z)), tp = -0.35;
+    player.yaw += angDiff(ty, player.yaw) * Math.min(1, dt * 6); player.pitch += (tp - player.pitch) * Math.min(1, dt * 6);
+    camera.position.copy(scv.cam0);
+  } else if (t < 1.1) {   // over the rail and onto the top rungs
+    if (!scv.thud) { scv.thud = true; sfx('ladderThud'); rumble(0.4, 0.3, 120); ssChips(SCV_LAD.foot.x, SCV_LAD.foot.y + 0.1, SCV_LAD.foot.z, 6); }
+    scvLadderPose(1);
+    const k = smooth((t - 0.6) / 0.5); scvLadderEye(0.03, _c1); camera.position.lerpVectors(scv.cam0, _c1, k);
+    player.yaw += angDiff(yawL, player.yaw) * Math.min(1, dt * 7); player.pitch += (-0.42 - player.pitch) * Math.min(1, dt * 7);
+  } else if (t < 2.5) {   // climb down, rung by rung
+    const k = (t - 1.1) / 1.4, u = lerp(0.03, 0.97, k * k * (3 - 2 * k) * 0.3 + k * 0.7);
+    scvLadderEye(u, camera.position); camera.position.y += Math.sin(k * 26) * 0.02;
+    player.yaw += angDiff(yawL, player.yaw) * Math.min(1, dt * 7); player.pitch += (-0.15 - player.pitch) * Math.min(1, dt * 4);
+    const rung = Math.floor(u * SCV_LAD.L / 0.34); if (rung !== scv.rungN) { scv.rungN = rung; sfx('rung'); }
+  } else if (t < 2.95) {   // step off and turn round to face the fields
+    const k = smooth((t - 2.5) / 0.45);
+    scvLadderEye(0.97, _c1); _c2.set(scv.x, scv.y + SCV_EYE, scv.z); camera.position.lerpVectors(_c1, _c2, k);
+    player.yaw = yawL + angDiff(yawOut, yawL) * k; player.pitch = lerp(-0.15, -0.05, k);
+    if (!scv.landed && k > 0.6) { scv.landed = true; sfx('land', 3); }
+  } else {
+    scv.ph = 'free'; scv.t = 0; scv.thud = scv.landed = false; scv.rungN = -1; scv.raise = 0;
+    player.yaw = yawOut;
+    if (store.get('fbz-ss-scavtip', '') !== '1') { store.set('fbz-ss-scavtip', '1'); hintMsg('Barn: scrap · Crates: gunpowder · Crypt: crystals', 5); }
+    else hintMsg('Barn left · Crypt right · Bank at the green ring', 3.5);
+  }
+}
+function scvUp(dt) {
+  const t = scv.t, yawL = SS_TROT;
+  if (t < 0.35) {
+    const k = smooth(t / 0.35); scvLadderEye(0.97, _c1); _c2.set(scv.x, scv.y + SCV_EYE, scv.z); camera.position.lerpVectors(_c2, _c1, k);
+    player.yaw += angDiff(yawL, player.yaw) * Math.min(1, dt * 9); player.pitch += (0.25 - player.pitch) * Math.min(1, dt * 6);
+  } else if (t < 1.5) {
+    const k = (t - 0.35) / 1.15, u = lerp(0.97, 0.45, k);
+    scvLadderEye(u, camera.position); camera.position.y += Math.sin(k * 20) * 0.02;
+    player.pitch += (0.35 - player.pitch) * Math.min(1, dt * 4);
+    const rung = Math.floor(u * SCV_LAD.L / 0.34); if (rung !== scv.rungN) { scv.rungN = rung; sfx('rung'); }
+    if (t > 1.0 && scv.fade < 1) { scv.fade = 1; scvFadeEl.style.opacity = 1; }
+  } else scvFinish();
+}
+function scvOut(dt) {
+  const t = scv.t, k = smooth(t / 0.7);
+  if (scv.why === 'down') {   // you hit the dirt; the world tips over
+    camera.position.set(scv.x, scv.y + lerp(SCV_EYE, 0.35, k), scv.z);
+    camera.rotation.set(lerp(player.pitch, 0.3, k), player.yaw, lerp(0, 0.9, k), 'YXZ');
+    vig.style.opacity = Math.min(1, 0.5 + t).toFixed(2);
+  } else scvCamera(dt);
+  if (t > 1.6 && scv.fade < 1) { scv.fade = 1; scvFadeEl.style.opacity = 1; }
+  if (t > 2.2) scvFinish();
+}
+function scvMove(dt) {
+  let mx = 0, mz = 0;
+  if (keys.has('KeyW') || keys.has('ArrowUp')) mz += 1;
+  if (keys.has('KeyS') || keys.has('ArrowDown')) mz -= 1;
+  if (keys.has('KeyD') || keys.has('ArrowRight')) mx += 1;
+  if (keys.has('KeyA') || keys.has('ArrowLeft')) mx -= 1;
+  if (stickId !== null) { mx += stickX; mz -= stickY; }
+  if (padActive) { mx += padMoveX; mz -= padMoveY; }
+  const L = Math.hypot(mx, mz); if (L > 1) { mx /= L; mz /= L; }
+  const wantRun = (keys.has('ShiftLeft') || keys.has('ShiftRight') || (stickId !== null && stickY < -0.86 && Math.abs(stickX) < 0.55) || (padActive && padSprint)) && mz > 0.5;
+  scv.sprint = wantRun && scv.adsE < 0.3 && scv.rel <= 0 && !(fTouch || fMouse || fKey || fPad);
+  const base = scv.sprint ? 6.8 : scv.adsE > 0.5 ? 2.7 : 4.4, w = 1 - 0.015 * scv.bag.length;
+  const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw), rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
+  const tvx = (fx * mz + rx * mx) * base * w, tvz = (fz * mz + rz * mx) * base * w, k = Math.min(1, dt * 11);
+  scv.vx = lerp(scv.vx, tvx, k); scv.vz = lerp(scv.vz, tvz, k);
+  const ox = scv.x, oz = scv.z;
+  _zp.x = scv.x + scv.vx * dt; _zp.z = scv.z + scv.vz * dt; scvCollide(_zp, SCV_R, false); scv.x = _zp.x; scv.z = _zp.z;
+  const fy = scvFloorY(scv.x, scv.z); scv.y = fy > scv.y ? lerp(scv.y, fy, Math.min(1, dt * 14)) : fy;
+  const v = Math.hypot(scv.x - ox, scv.z - oz) / Math.max(dt, 1e-4);
+  scv.move = lerp(scv.move, clamp(v / 4.4, 0, 1.5), Math.min(1, dt * 10)); scv.bob += dt * v * 1.9;
+  scv.stepAcc += v * dt; if (scv.stepAcc > (scv.sprint ? 2.3 : 1.8)) { scv.stepAcc = 0; sfx('step'); }
+  if (time - scv.lastHit > 5 && scv.hp < 100) scv.hp = Math.min(100, scv.hp + 6 * dt);
+}
+function scvCamera(dt) {
+  scv.rec = lerp(scv.rec, 0, Math.min(1, dt * 7)); scv.recY = lerp(scv.recY, 0, Math.min(1, dt * 8));
+  scv.shake = Math.max(0, scv.shake - dt * 1.6);
+  const sh = (reduceMotion ? 0.3 : 1) * scv.shake, bob = Math.sin(scv.bob * 2) * 0.035 * Math.min(1, scv.move) * (1 - scv.adsE * 0.8);
+  camera.position.set(scv.x, scv.y + SCV_EYE + bob, scv.z);
+  camera.rotation.set(player.pitch + scv.rec + (Math.random() - 0.5) * sh * 0.05, player.yaw + scv.recY + (Math.random() - 0.5) * sh * 0.05, (Math.random() - 0.5) * sh * 0.03, 'YXZ');
+  const fov = lerp(baseFov, baseFov / SCV_GUN.zoom, scv.adsE) + (scv.sprint ? 5 : 0) * (1 - scv.adsE);
+  if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 12)); camera.updateProjectionMatrix(); }
+}
+// a light pull onto the nearest straggler when you aim on touch or a controller, and some stickiness over one
+function scvAim(dt) {
+  assistFriction = 1;
+  if (scv.snapT > 0 && scv.snapZ && scv.snapZ.state !== 'dead') {
+    scv.snapT -= dt; zHeadPos(scv.snapZ, _c1); const cp = camera.position, ty = ZTYPES[scv.snapZ.type];
+    _c1.y -= ty.headR * 1.4;
+    const yy = Math.atan2(-(_c1.x - cp.x), -(_c1.z - cp.z)), pp = Math.atan2(_c1.y - cp.y, Math.hypot(_c1.x - cp.x, _c1.z - cp.z)), k = Math.min(1, dt * 14);
+    player.yaw += angDiff(yy, player.yaw) * k; player.pitch += (pp - player.pitch) * k;
+  }
+  if ((padActive || lastTouch) && scv.adsE > 0.4) { camera.getWorldDirection(_cd); if (ssRayZombies(camera.position, _cd, 60)) assistFriction = 0.5; }
+}
+function scvSnap() {
+  if (!(padActive || lastTouch)) return;
+  camera.getWorldDirection(_cd); let best = null, ba = 0.14;
+  for (const z of ssZombies) {
+    if (z.state === 'dead' || z.state === 'buried' || z.state === 'rise') continue;
+    const ty = ZTYPES[z.type]; _c1.set(z.x, z.y + ty.top * 0.7, z.z).sub(camera.position);
+    const dl = _c1.length(); if (dl > 45) continue;
+    const a = Math.acos(clamp(_c1.dot(_cd) / dl, -1, 1)); if (a < ba) { ba = a; best = z; }
+  }
+  if (best) { scv.snapZ = best; scv.snapT = 0.18; }
+}
+function scvToggleAds() { if (scv.ph !== 'free' || scv.rel > 0) return; adsToggle = !adsToggle; if (adsToggle) scvSnap(); }
+function scvReload() {
+  if (scv.ph !== 'free' || scv.rel > 0 || scv.ammo >= SCV_GUN.mag) return;
+  scv.rel = SCV_GUN.reload; scv.relP = 0; adsToggle = false;
+}
+function scvWeapon(dt) {
+  const g = SCV_GUN, free = scv.ph === 'free';
+  scv.cd -= dt; scv.raise = Math.min(1, scv.raise + dt / 0.35);
+  const trig = free && scv.raise > 0.6 && (fTouch || fMouse || fKey || fPad);
+  if (adsPad && !scv.prevAdsPad) scvSnap(); scv.prevAdsPad = adsPad;
+  const want = free && (adsToggle || adsPad) && scv.rel <= 0;
+  scv.adsT = clamp(scv.adsT + (want ? dt : -dt * 1.5) / g.adsTime, 0, 1); scv.adsE = smooth(scv.adsT);
+  if (scv.rel > 0) {
+    scv.rel -= dt; const p = 1 - Math.max(0, scv.rel) / g.reload, p0 = scv.relP; scv.relP = p;
+    const at = q => p0 < q && p >= q;
+    if (at(0.1)) sfx('revOpen');
+    if (at(0.24)) { scvCasings(); sfx('casings'); }
+    if (at(0.56)) sfx('revLoad');
+    if (at(0.74)) sfx('revClose');
+    if (scv.rel <= 0) { scv.rel = 0; scv.ammo = g.mag; }
+  }
+  // the hammer re-cocks and the cylinder turns to the next chamber after each shot
+  scv.ham = Math.min(0.5, scv.ham + dt * 3.2);
+  scv.cylA = lerp(scv.cylA, scv.cylTo, Math.min(1, dt * 22));
+  if (trig && scv.cd <= 0 && scv.rel <= 0) { if (scv.ammo <= 0) { sfx('revDry'); scv.cd = 0.3; scvReload(); } else scvFire(); }
+}
+function scvCasings() {
+  camera.getWorldDirection(_cd); _cx.set(1, 0, 0).applyQuaternion(camera.quaternion);
+  const x = camera.position.x + _cd.x * 0.35 + _cx.x * 0.05, z = camera.position.z + _cd.z * 0.35 + _cx.z * 0.05, y = camera.position.y - 0.25;
+  for (let i = 0; i < 8; i++) ssDirtChunks.emit(x + rand(-0.04, 0.04), y, z + rand(-0.04, 0.04), rand(-0.5, 0.5), rand(-0.5, 0.6), rand(-0.5, 0.5), rand(0.025, 0.035), rand(1.6, 2.2), 0xd9a441);
+}
+function scvFire() {
+  const g = SCV_GUN; scv.ammo--; scv.cd = g.rate; ssStats.shots++;
+  camera.updateMatrixWorld(); camera.getWorldDirection(_cd);
+  const s = lerp(g.spread[0] + Math.min(1, scv.move) * 0.012 + (scv.sprint ? 0.02 : 0), g.spread[1], scv.adsE), a = rand(0, TAU), r = s * Math.sqrt(Math.random());
+  _cx.set(1, 0, 0).applyQuaternion(camera.quaternion); _cy.set(0, 1, 0).applyQuaternion(camera.quaternion);
+  _cd.addScaledVector(_cx, Math.cos(a) * r).addScaledVector(_cy, Math.sin(a) * r).normalize();
+  const o = _co.copy(camera.position);
+  let endT = 160; const tg = ssRayGround(o, _cd, endT); if (tg > 0) endT = tg;
+  const tw = scvRayWalls(o, _cd, endT); let wall = false; if (tw > 0) { endT = tw; wall = true; }
+  const h = ssRayZombies(o, _cd, endT), stopT = h ? h.t : endT;
+  const end = new T.Vector3().copy(o).addScaledVector(_cd, stopT), mz = scvMuzzleWorld(new T.Vector3());
+  ssBeam([mz, end], 0xffe2a8, 0.05, 0.014, 0.08, 0, 0.9);
+  ssSprite(mz.x, mz.y, mz.z, 0xb0a8a0, 0.12, 0.6, 0.7, _cd.x * 0.6, 0.35, _cd.z * 0.6, 0.35, 0, true);
+  if (h) {
+    const zb = h.z; let dmg = g.dmg * (h.head ? g.headMul : 1) * ssDmgMul();
+    if (h.head) dmg = Math.max(dmg, zb.hp + 1);   // a headshot always drops a straggler
+    ssStats.hits++; if (zb.state === 'idle' || zb.state === 'buried') scvWake(zb);
+    const wasAlive = zb.state !== 'dead';
+    ssHitZombie(zb, dmg, h.head, end, 0xffc46a);
+    if (wasAlive && zb.state === 'dead') scv.kills++;
+  } else if (endT < 160) {
+    ssSparks(end.x, end.y + 0.04, end.z, 0xffd890, 6, 3); ssSprite(end.x, end.y + 0.08, end.z, 0xffc46a, 0.3, 1.0, 0.2, 0, 0, 0, 0.7);
+    if (wall) ssChips(end.x, end.y, end.z, 4); else ssDirt(end.x, end.y, end.z, 3);
+  }
+  scvAlert(o.x, o.z, 34);
+  scv.kick = 1; scv.rec += 0.05 + rand(0, 0.012); scv.recY += rand(-0.009, 0.009); scv.flashT = 0.05; scv.ham = -0.05; scv.cylTo += TAU / 8; scv.shake = Math.max(scv.shake, 0.06);
+  sfx('rev'); rumble(0.55, 0.35, 90);
+  if (scv.ammo === 0) setTimeout(() => { if (scv.on && scv.ph === 'free' && scv.ammo === 0) scvReload(); }, 330);
+}
+function scvMuzzleWorld(out) { const r = scvRig; return out.copy(r.muzzle).applyMatrix4(r.root.matrixWorld).add(camera.position); }
+function scvViewmodel(dt) {
+  const r = scvRig, g = SCV_GUN, e = scv.adsE, port = ssGunCam.aspect < 1 ? 1 : 0;
+  for (const s of SNIPERS) s.rig.root.visible = false;
+  const show = scv.ph === 'free' || (scv.ph === 'out' && scv.why === 'time');
+  r.root.visible = show;
+  if (!show) { ssGunFlash.intensity = 0; return; }
+  const hx = r.hip[0] * (port ? 0.8 : 1), hy = r.hip[1] - 0.03 * port, hz = r.hip[2] - 0.08 * port;
+  let x = lerp(hx, -r.ads[0], e), y = lerp(hy, -r.ads[1], e), z = lerp(hz, -r.ads[2], e), rx = 0, ry = lerp(0.06, 0, e), rz = 0;
+  const mv = Math.min(1, scv.move);
+  x += Math.sin(scv.bob) * 0.012 * mv * (1 - e * 0.7); y -= Math.abs(Math.cos(scv.bob)) * 0.012 * mv * (1 - e * 0.7);
+  scv.runE = lerp(scv.runE || 0, scv.sprint ? 1 : 0, Math.min(1, dt * 9)); const sk = scv.runE; x -= 0.04 * sk; y -= 0.05 * sk; rz += 0.45 * sk; rx -= 0.25 * sk; ry += 0.3 * sk;
+  y += Math.sin(time * 1.6) * 0.0022 * (1 - e); x += Math.sin(time * 0.9) * 0.0014 * (1 - e);
+  const k = Math.min(1, dt * 10); swayX = lerp(swayX, 0, k); swayY = lerp(swayY, 0, k);
+  const sx = clamp(swayX, -40, 40), sy = clamp(swayY, -40, 40);
+  x -= sx * 0.0005; y += sy * 0.0005; ry += sx * 0.0011; rz -= sx * 0.0008;
+  z += scv.kick * 0.045; rx += scv.kick * 0.2; y += scv.kick * 0.008;
+  scv.kick *= Math.exp(-dt * 11);
+  y -= (1 - smooth(scv.raise)) * 0.25; rx -= (1 - smooth(scv.raise)) * 0.6;
+  const cyl = r.parts.cyl, ld = r.parts.ld;
+  if (scv.rel > 0) {   // tip it up, swing the cylinder out, casings fall, the speedloader comes in, snap it shut with a spin
+    const p = scv.relP, tilt = Math.sin(Math.min(1, p / 0.94) * Math.PI);
+    rz += tilt * 0.7; rx += tilt * 0.38; y += tilt * 0.015; x -= tilt * 0.035;
+    const sw = p < 0.1 ? 0 : p < 0.22 ? smooth((p - 0.1) / 0.12) : p < 0.72 ? 1 : p < 0.8 ? 1 - smooth((p - 0.72) / 0.08) : 0;
+    cyl.position.set(-0.042 * sw, 0.006 - 0.014 * sw, -0.05);
+    cyl.rotation.z = scv.cylA + (p > 0.74 ? (p - 0.74) * 46 : 0);
+    const lk = p < 0.32 || p > 0.68 ? -1 : p < 0.52 ? smooth((p - 0.32) / 0.2) : p < 0.6 ? 1 : 1 - smooth((p - 0.6) / 0.08);
+    ld.visible = lk >= 0; if (lk >= 0) ld.position.set(cyl.position.x, cyl.position.y - (1 - lk) * 0.16, -0.05 + 0.06 - lk * 0.032);
+  } else { cyl.position.set(0, 0.006, -0.05); cyl.rotation.z = scv.cylA; ld.visible = false; }
+  r.parts.ham.rotation.x = -Math.max(0, scv.ham) * 1.1;
+  ssGunPivot.quaternion.copy(camera.quaternion);
+  r.root.position.set(x, y, z); r.root.rotation.set(rx, ry, rz, 'YXZ');
+  ssGunPivot.updateMatrixWorld(true);
+  for (const h of r.halos) h.material.opacity = h.userData.base * (0.85 + Math.sin(time * 3) * 0.15);
+  const fl = scv.flashT > 0; scv.flashT -= dt;
+  r.flash.visible = fl; if (fl) { r.flash.material.color.set(0xffd8a0); r.flash.material.rotation = Math.random() * TAU; r.flash.scale.setScalar(rand(0.2, 0.28)); }
+  if (fl) { _c1.copy(r.muzzle).applyMatrix4(r.root.matrixWorld); ssGunFlash.position.copy(_c1); ssGunFlash.color.set(0xffc46a); ssGunFlash.intensity = 3; } else ssGunFlash.intensity = 0;
+}
+
+// ---------- Loot pickup, prying crates, banking at the ladder ----------
+function scvLoot(dt) {
+  scv.prying = null; scv.fullT = Math.max(0, scv.fullT - dt);
+  for (const n of scvNodes) {
+    if (n.done) continue;
+    n.ph += dt;
+    n.spark.material.opacity = Math.max(0, Math.sin(n.ph * 2.2)) * 0.9; n.spark.scale.setScalar(0.35 + Math.max(0, Math.sin(n.ph * 2.2)) * 0.4); n.spark.material.rotation = n.ph;
+    if (n.k === 'crystal') { n.g.rotation.y += dt * 0.6; n.halo.material.opacity = 0.45 + Math.sin(n.ph * 3) * 0.15; }
+    if (n.halo && n.k === 'gold') n.halo.material.opacity = 0.45 + Math.sin(n.ph * 2.5) * 0.15;
+    if (n.pop > 0) { n.pop = Math.max(0, n.pop - dt * 3); n.g.scale.setScalar(1 + n.pop * 0.25); }
+    if (n.lid && n.open && n.lidT !== undefined && n.lidT < 1) {   // the lid flies off
+      n.lidT = Math.min(1, n.lidT + dt * 1.6); const k = n.lidT, s = n.k === 'gold' ? 1.3 : 1;
+      n.lid.position.set(k * 0.9 * s, 0.595 * s + Math.sin(k * Math.PI) * 0.9 - k * 0.55 * s, 0); n.lid.rotation.set(0, 0, -k * 2.6);
+    }
+    if (scv.ph !== 'free') continue;
+    const d = Math.hypot(n.x - scv.x, n.z - scv.z), dy = Math.abs(n.y - scv.y);
+    if (!n.open) {
+      const near = d < 1.95 && dy < 1.7 && scv.bag.length < SCV_BAG;
+      if (near) {
+        n.pry += dt / n.need; scv.prying = n;
+        n.creak = (n.creak || 0) - dt; if (n.creak <= 0) { n.creak = 0.24; sfx('pry'); n.g.rotation.z = rand(-0.03, 0.03); }
+        if (n.pry >= 1) scvOpenCrate(n);
+      } else { n.pry = Math.max(0, n.pry - dt * 0.6); n.g.rotation.z = 0; if (d < 1.95 && scv.bag.length >= SCV_BAG) scvBagFull(); }
+      n.ring.material.opacity = n.pry > 0 ? 0.95 : 0;
+      if (Math.abs(n.pry - (n.pryShown || 0)) > 0.008) { n.pryShown = n.pry; n.ring.geometry.dispose(); n.ring.geometry = new T.RingGeometry(0.98, 1.1, 48, 1, Math.PI / 2, -Math.max(0.001, n.pry) * TAU); }
+      continue;
+    }
+    if (d < (n.k === 'crate' || n.k === 'gold' ? 1.95 : 1.55) && dy < 1.8) scvTake(n);
+  }
+}
+function scvOpenCrate(n) {
+  n.open = true; n.lidT = 0; n.ring.visible = false; n.inside.visible = true; n.g.rotation.z = 0;
+  const p = n.g.position; ssChips(p.x, p.y + 0.6, p.z, 10); ssSprite(p.x, p.y + 0.6, p.z, n.k === 'gold' ? 0xffd23a : 0xffb060, 0.5, 2.2, 0.3, 0, 0, 0, 0.8);
+  sfx('crack'); rumble(0.3, 0.3, 100);
+  if (n.k === 'gold') { sfx('golden'); banner('Golden crate!', 'A big haul', 2); for (let i = 0; i < 14; i++) ssSprite(p.x, p.y + 0.8, p.z, 0xffe27a, 0.2, 0.04, rand(0.6, 1.1), rand(-2.5, 2.5), rand(2, 4.5), rand(-2.5, 2.5), 1, 6); }
+  scvTake(n);
+}
+function scvBagFull() { if (scv.fullT > 0) return; scv.fullT = 4; hintMsg('Backpack full: bank it at the ladder', 2.6); sfx('empty'); }
+function scvTake(n) {
+  const got = { scrap: 0, powder: 0, crystal: 0 }; let took = 0;
+  for (const k of ['crystal', 'powder', 'scrap']) while (n.items[k] > 0 && scv.bag.length < SCV_BAG) { n.items[k]--; scv.bag.push(k); got[k]++; took++; }
+  if (took) {
+    popup(SCV_KINDS.filter(k => got[k]).map(k => '+' + got[k] + ' ' + SCV_ITEM[k].name).join('  '), got.crystal ? 'gold' : '');
+    sfx(got.crystal ? 'pickCrystal' : got.powder ? 'pickPowder' : 'pickScrap'); n.pop = 1;
+    if (n.inside) n.inside.children.forEach((c, i) => { c.visible = i < scvNodeLeft(n); });
+  }
+  if (scvNodeLeft(n) <= 0) {
+    n.done = true; const p = n.g.position;
+    for (let i = 0; i < 8; i++) ssSprite(p.x, p.y + 0.4, p.z, n.k === 'crystal' ? 0x9ffcff : 0xffe8b0, 0.18, 0.03, rand(0.4, 0.7), rand(-1.5, 1.5), rand(1.5, 3), rand(-1.5, 1.5), 1, 6);
+    if (n.k === 'crate' || n.k === 'gold') { n.spark.visible = false; if (n.halo) n.halo.visible = false; if (n.beam) n.beam.visible = false; }
+    else ssScene.remove(n.g);
+  } else if (scv.bag.length >= SCV_BAG) scvBagFull();
+}
+function scvBank() {
+  const got = { scrap: 0, powder: 0, crystal: 0 };
+  for (const k of scv.bag) got[k]++;
+  scv.bag = [];
+  for (const k of SCV_KINDS) { scv.bank[k] += got[k]; ssBench.parts[k] += got[k]; }
+  popup('Banked ' + SCV_KINDS.filter(k => got[k]).map(k => got[k] + ' ' + SCV_ITEM[k].name).join(', '), 'gold');
+  sfx('bank'); rumble(0.3, 0.2, 90); scvStashFill();
+  const p = scvStash.position; for (let i = 0; i < 10; i++) ssSprite(p.x, p.y + 0.6, p.z, 0x9dffb8, 0.2, 0.04, rand(0.4, 0.7), rand(-1.2, 1.2), rand(1.5, 3), rand(-1.2, 1.2), 1, 6);
+  ssSave(ssWave + 1, ssTowerMax);   // banked parts survive quitting
+}
+// the stash crate at the foot of the ladder fills up as you bank
+function scvStashFill() {
+  const f = scvStash.userData.fill, n = scv.bank.scrap + scv.bank.powder + scv.bank.crystal, want = Math.min(12, n);
+  scvKitBuild();
+  while (f.children.length < want) {
+    const i = f.children.length, kinds = SCV_KINDS.flatMap(k => Array(scv.bank[k]).fill(k)), k = kinds[i] || 'scrap';
+    const m = gbMesh(k === 'scrap' ? scvKit.bits : k === 'powder' ? scvKit.sack : scvKit.crystal, f, false);
+    m.scale.setScalar(k === 'crystal' ? 0.8 : 1.1); m.position.set(rand(-0.35, 0.35), 0.5 + Math.floor(i / 4) * 0.12, rand(-0.2, 0.2)); m.rotation.y = rand(0, TAU);
+  }
+  while (f.children.length > want) f.remove(f.children[f.children.length - 1]);
+}
+function scvRingCheck() {
+  const d = Math.hypot(scv.x - SCV_LAD.ring.x, scv.z - SCV_LAD.ring.z);
+  scv.ring = d < SCV_RING_R;
+  if (scv.ring && scv.bag.length) scvBank();
+}
+function scvClimb() { if (scv.on && scv.ph === 'free' && scv.ring) scvEnd('climb'); }
+function scvTimer(dt) {
+  scv.left = Math.max(0, scv.left - dt);
+  if (!scv.warned && scv.left <= SCV_WARN) { scv.warned = true; scv.warnT = 2.2; banner(SCV_WARN + ' seconds!', 'Get back to the ladder', 2.4); sfx('hurry'); rumble(0.4, 0.4, 200); }
+  const s = Math.ceil(scv.left); if (s !== scv.tick) { scv.tick = s; if (s <= 5 && s > 0) sfx('tick'); }
+  if (scv.left <= 0) scvEnd(scv.ring ? 'climb' : 'time');
+}
+function scvBirds(dt) { scv.birdT -= dt; if (scv.birdT <= 0) { scv.birdT = rand(2.5, 6); sfx('bird'); } }
+function scvUpdate(dt) {
+  dt *= ssTS;
+  time += dt; scv.t += dt;
+  if (scv.ph === 'down') scvDown(dt);
+  else if (scv.ph === 'free') { scvMove(dt); scvAim(dt); scvRingCheck(); scvTimer(dt); }
+  else if (scv.ph === 'up') scvUp(dt);
+  else if (scv.ph === 'out') scvOut(dt);
+  if (!scv.on) return;   // finished this frame
+  if (scv.ph === 'free') scvCamera(dt);
+  else if (scv.ph !== 'out') camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
+  scvWeapon(dt);
+  camera.updateMatrixWorld();
+  for (let i = ssZombies.length - 1; i >= 0; i--) if (scvZombie(ssZombies[i], dt)) { ssRemoveZombie(ssZombies[i]); ssZombies.splice(i, 1); }
+  ssSeparate(); if (scv.ph === 'free') scvPushOff();
+  if (scv.ph === 'free') scvSpawner(dt);
+  scvLoot(dt); scvPlumesUpdate(dt); scvBirds(dt);
+  scvRingM.userData.ringM.material.opacity = 0.6 + Math.sin(time * 4) * 0.25; scvRingM.userData.disc.material.opacity = scv.ring ? 0.22 : 0.1;
+  const near = clamp((Math.hypot(scv.x - SCV_LAD.ring.x, scv.z - SCV_LAD.ring.z) - 3) / 8, 0, 1);   // the pillar fades as you reach it
+  scvBeamM.material.opacity = (0.22 + Math.sin(time * 2) * 0.06 + (scv.left <= SCV_WARN ? 0.18 : 0)) * near; scvBeamM.visible = near > 0.02;
+  scvViewmodel(dt);
+  scvHud(dt);
+}
+
+// ---------- HUD ----------
+function scvHud(dt) {
+  const alive = ssZombies.filter(z => z.state !== 'dead' && z.state !== 'buried').length;
+  setText(nightNumEl, 'night', 'Dawn · Night ' + scv.N); setText(waveNumEl, 'wave', 'Scavenging'); setText(hostilesEl, 'host', alive + (alive === 1 ? ' straggler' : ' stragglers'));
+  const s = Math.ceil(scv.left); setText(scvTimeEl, 'scvT', Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'));
+  const warn = scv.left <= SCV_WARN; if (hudCache.scvWarn !== warn) { hudCache.scvWarn = warn; scvTopEl.classList.toggle('warn', warn); }
+  const bk = scv.bag.join(',');
+  if (scv.bagKey !== bk) { scv.bagKey = bk; let h = ''; for (let i = 0; i < SCV_BAG; i++) h += '<i class="' + (scv.bag[i] || '') + '"></i>'; scvBagEl.innerHTML = h; scvTopEl.classList.toggle('full', scv.bag.length >= SCV_BAG); }
+  setText(scvBankEl, 'scvB', 'Bag ' + scv.bag.length + '/' + SCV_BAG + ' · Banked ' + scv.bank.scrap + ' ' + SCV_ITEM.scrap.glyph + '  ' + scv.bank.powder + ' ' + SCV_ITEM.powder.glyph + '  ' + scv.bank.crystal + ' ' + SCV_ITEM.crystal.glyph);
+  const hpw = (scv.hp / 100).toFixed(3);
+  if (hudCache.scvHp !== hpw) { hudCache.scvHp = hpw; scvHpFill.style.transform = 'scaleX(' + hpw + ')'; scvHpFill.style.backgroundColor = scv.hp > 60 ? '#5ce06a' : scv.hp > 30 ? '#ffc23a' : '#ff4b3e'; scvHpEl.classList.toggle('low', scv.hp <= 30); }
+  scv.hurt = Math.max(0, scv.hurt - dt * 1.4);
+  if (scv.ph === 'free' || scv.ph === 'down' || scv.ph === 'up') { const vo = clamp((1 - scv.hp / 100) * 0.9 + scv.hurt * 0.8, 0, 1); vig.style.opacity = vo.toFixed(2); }
+  setText(wNameEl, 'wname', SCV_GUN.name); if (hudCache.wcol !== 'rev') { hudCache.wcol = 'rev'; wNameEl.style.color = '#ffc46a'; }
+  setText(ammoNum, 'ammo', scv.rel > 0 ? '--' : String(scv.ammo)); setText(ammoRes, 'res', '/ ' + SCV_GUN.mag);
+  const ammoCls = scv.rel > 0 ? 'reloading' : scv.ammo <= 2 ? 'low' : '';
+  if (hudCache.ammoCls !== ammoCls) { hudCache.ammoCls = ammoCls; ammoEl.className = ammoCls; reloadBtn.classList.toggle('urgent', ammoCls === 'low'); }
+  if (hudCache.ads !== adsToggle) { hudCache.ads = adsToggle; adsBtn.classList.toggle('on', adsToggle); }
+  const co = scv.ph === 'free' ? clamp(1 - scv.adsE * 1.3, 0, 1).toFixed(2) : '0';
+  if (hudCache.co !== co) { hudCache.co = co; crossEl.style.opacity = co; }
+  const gap = (6 + (1 - scv.adsE) * 6 + Math.min(1, scv.move) * 5).toFixed(0);
+  if (hudCache.gap !== gap) { hudCache.gap = gap; crossEl.style.setProperty('--gap', gap + 'px'); }
+  // the way home: an arrow once time is short or the bag is full
+  scv.warnT = Math.max(0, (scv.warnT || 0) - dt);   // the arrow waits for the 15-second banner to clear
+  const showArrow = scv.ph === 'free' && (scv.left <= SCV_WARN || scv.bag.length >= SCV_BAG) && !scv.ring && scv.warnT <= 0;
+  if (hudCache.arrow !== showArrow) { hudCache.arrow = showArrow; scvArrowEl.classList.toggle('on', showArrow); }
+  if (showArrow) {
+    const dx = SCV_LAD.ring.x - scv.x, dz = SCV_LAD.ring.z - scv.z, c = Math.cos(player.yaw), s2 = Math.sin(player.yaw), ang = Math.atan2(dx * c - dz * s2, -(dx * s2 + dz * c));
+    scvArrowEl.style.setProperty('--a', ang.toFixed(3) + 'rad'); setText(scvArrowDist, 'scvD', 'Ladder ' + Math.round(Math.hypot(dx, dz)) + ' m');
+  }
+  let pr = '';
+  if (scv.ph === 'free') {
+    if (scv.prying) pr = (scv.prying.k === 'gold' ? 'Prying the golden crate ' : 'Prying open ') + Math.round(scv.prying.pry * 100) + '%';
+    else if (scv.ring) pr = padActive ? 'Press ✕ to climb up' : isTouch ? 'Tap Climb to go back up' : 'Press Space to climb up';
+  }
+  setText(scvPromptEl, 'scvP', pr); if (hudCache.scvPr !== !!pr) { hudCache.scvPr = !!pr; scvPromptEl.classList.toggle('on', !!pr); }
+  const cb = scv.ph === 'free' && scv.ring; if (hudCache.climb !== cb) { hudCache.climb = cb; climbBtnEl.classList.toggle('on', cb); }
+  if (hintT > 0) { hintT -= dt; if (hintT <= 0) hintEl.hidden = true; }
+  const pk = padActive && scv.ph === 'free' && scv.t < 14 ? '1' : '0';
+  if (hudCache.pk !== pk) { hudCache.pk = pk; padKeysEl.style.opacity = pk; }
+  radarT -= dt; if (radarT <= 0) { radarT = 0.06; scvDrawRadar(); }
+}
+function scvDrawRadar() {
+  const s = radar.width, Rr = s / 2, sc = Rr / 60, k = s / 96;
+  rctx.setTransform(1, 0, 0, 1, 0, 0); rctx.clearRect(0, 0, s, s);
+  rctx.save(); rctx.beginPath(); rctx.arc(Rr, Rr, Rr - 1, 0, TAU); rctx.clip();
+  rctx.fillStyle = 'rgba(20,16,30,0.62)'; rctx.fillRect(0, 0, s, s);
+  rctx.strokeStyle = 'rgba(243,236,224,0.14)'; rctx.lineWidth = 1; for (const q of [0.33, 0.66]) { rctx.beginPath(); rctx.arc(Rr, Rr, Rr * q, 0, TAU); rctx.stroke(); }
+  const c = Math.cos(player.yaw), sn = Math.sin(player.yaw);
+  rctx.setTransform(c * sc, sn * sc, -sn * sc, c * sc, Rr, Rr);
+  const X = x => x - scv.x, Z = z => z - scv.z, dot = (x, z, r, col) => { rctx.fillStyle = col; rctx.beginPath(); rctx.arc(X(x), Z(z), r, 0, TAU); rctx.fill(); };
+  rctx.fillStyle = 'rgba(160,140,220,0.3)'; rctx.beginPath(); rctx.arc(X(SS_GRAVE_C.x), Z(SS_GRAVE_C.z), 13, 0, TAU); rctx.fill();
+  const bp = SS.barn.position; rctx.fillStyle = 'rgba(208,69,58,0.45)'; rctx.fillRect(X(bp.x) - 5, Z(bp.z) - 5, 10, 10);
+  dot(0, 0, 3.4, 'rgba(255,190,90,0.6)');
+  for (const n of scvNodes) {
+    if (n.done) continue;
+    const col = n.k === 'gold' ? '#ffd23a' : n.k === 'crystal' ? '#6ff3ff' : n.k === 'crate' ? '#ff9a4a' : '#e6ecf5';
+    if (n.k === 'crate' || n.k === 'gold') { rctx.fillStyle = col; const r = n.k === 'gold' ? 3.2 : 2.3; rctx.fillRect(X(n.x) - r, Z(n.z) - r, r * 2, r * 2); }
+    else dot(n.x, n.z, n.k === 'drop' ? 1.2 : 2, col);
+  }
+  for (const z of ssZombies) { if (z.state === 'dead' || z.state === 'buried') continue; dot(z.x, z.z, 2.1, z.state === 'idle' ? 'rgba(255,90,70,0.5)' : '#ff4b3e'); }
+  const lr = SCV_LAD.ring; rctx.strokeStyle = '#5cff8a'; rctx.lineWidth = 1.4 / sc; rctx.beginPath(); rctx.arc(X(lr.x), Z(lr.z), 3.6, 0, TAU); rctx.stroke(); dot(lr.x, lr.z, 1.6, '#5cff8a');
+  rctx.setTransform(1, 0, 0, 1, 0, 0);
+  const half = Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect);
+  rctx.fillStyle = 'rgba(242,177,52,0.16)'; rctx.beginPath(); rctx.moveTo(Rr, Rr);
+  rctx.lineTo(Rr + Math.sin(-half) * Rr, Rr - Math.cos(half) * Rr); rctx.lineTo(Rr + Math.sin(half) * Rr, Rr - Math.cos(half) * Rr); rctx.closePath(); rctx.fill();
+  rctx.fillStyle = '#f2b134'; rctx.beginPath(); rctx.moveTo(Rr, Rr - 6 * k); rctx.lineTo(Rr + 4.5 * k, Rr + 4.5 * k); rctx.lineTo(Rr - 4.5 * k, Rr + 4.5 * k); rctx.closePath(); rctx.fill();
+  rctx.restore();
+}
+
+// ---------- Sounds ----------
+Object.assign(SFX, {
+  rev() {
+    const p = rand(0.95, 1.05);
+    nz({ type: 'highpass', f0: 3400, dur: 0.045, vol: 0.55 });
+    nz({ type: 'lowpass', f0: 3600 * p, f1: 150, dur: 0.55, vol: 1.0 });
+    tn({ f0: 92 * p, f1: 30, dur: 0.42, vol: 0.95 });
+    tn({ type: 'square', f0: 150, f1: 62, dur: 0.06, vol: 0.1 });
+    tn({ type: 'triangle', f0: 1250 * p, f1: 980, dur: 0.22, vol: 0.03 });
+    nz({ type: 'lowpass', f0: 900, f1: 140, dur: 0.8, vol: 0.22, when: 0.16, att: 0.04 });
+  },
+  revDry() { tn({ type: 'square', f0: 1900, dur: 0.014, vol: 0.06 }); nz({ type: 'bandpass', f0: 3200, q: 6, dur: 0.02, vol: 0.28 }); },
+  revOpen() { nz({ type: 'bandpass', f0: 1500, q: 3, dur: 0.05, vol: 0.35 }); tn({ type: 'triangle', f0: 640, f1: 420, dur: 0.08, vol: 0.05 }); },
+  casings() { for (let i = 0; i < 6; i++) tn({ type: 'triangle', f0: rand(2800, 4200), dur: 0.05, vol: 0.035, when: 0.3 + i * rand(0.03, 0.07) }); },
+  revLoad() { for (let i = 0; i < 3; i++) { nz({ type: 'bandpass', f0: rand(2200, 2800), q: 5, dur: 0.03, vol: 0.25, when: i * 0.04 }); tn({ type: 'triangle', f0: rand(2400, 3000), dur: 0.05, vol: 0.03, when: i * 0.04 }); } },
+  revClose() { nz({ type: 'bandpass', f0: 2100, q: 4, dur: 0.04, vol: 0.45 }); tn({ type: 'sawtooth', f0: 320, f1: 120, dur: 0.32, vol: 0.03, when: 0.03 }); nz({ type: 'bandpass', f0: 4000, q: 2, dur: 0.3, vol: 0.06, when: 0.03 }); },
+  ladderDrop() { nz({ type: 'bandpass', f0: 600, f1: 1400, q: 1.2, dur: 0.5, vol: 0.18, att: 0.1 }); },
+  ladderThud() { tn({ f0: 95, f1: 40, dur: 0.28, vol: 0.6 }); nz({ type: 'lowpass', f0: 1300, f1: 220, dur: 0.3, vol: 0.45 }); nz({ type: 'bandpass', f0: 1800, q: 4, dur: 0.04, vol: 0.3, when: 0.05 }); },
+  claw() { nz({ type: 'bandpass', f0: 1400, f1: 600, q: 1.5, dur: 0.16, vol: 0.4, att: 0.01 }); },
+  knock() { tn({ f0: 70, f1: 32, dur: 0.45, vol: 0.9 }); nz({ type: 'lowpass', f0: 900, f1: 120, dur: 0.35, vol: 0.5 }); tn({ type: 'sine', f0: 2800, dur: 1.4, vol: 0.025, att: 0.1, when: 0.1 }); },
+  pry() { tn({ type: 'sawtooth', f0: rand(150, 210), f1: rand(120, 150), dur: 0.18, vol: 0.05 }); nz({ type: 'bandpass', f0: rand(700, 1100), q: 4, dur: 0.12, vol: 0.14 }); },
+  crack() { nz({ type: 'lowpass', f0: 2600, f1: 280, dur: 0.28, vol: 0.55 }); tn({ f0: 130, f1: 60, dur: 0.16, vol: 0.35 }); nz({ type: 'bandpass', f0: 3200, q: 3, dur: 0.05, vol: 0.3 }); },
+  golden() { [523.3, 659.3, 784, 1046.5, 1318.5, 1568].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.5, vol: 0.06, when: i * 0.07 })); for (let i = 0; i < 6; i++) tn({ type: 'sine', f0: rand(2500, 4000), dur: 0.08, vol: 0.03, when: 0.4 + i * 0.06 }); },
+  pickScrap() { nz({ type: 'bandpass', f0: rand(1600, 2200), q: 3, dur: 0.08, vol: 0.3 }); tn({ type: 'triangle', f0: rand(800, 1000), dur: 0.1, vol: 0.05 }); tn({ type: 'triangle', f0: rand(1200, 1500), dur: 0.08, vol: 0.04, when: 0.06 }); },
+  pickPowder() { nz({ type: 'lowpass', f0: 700, f1: 200, dur: 0.16, vol: 0.4 }); nz({ type: 'bandpass', f0: 2600, q: 1.5, dur: 0.14, vol: 0.1, when: 0.03 }); },
+  pickCrystal() { [1568, 2093, 2637, 3136].forEach((f, i) => tn({ type: 'triangle', f0: f, dur: 0.5, vol: 0.05, when: i * 0.06 })); },
+  bank() { nz({ type: 'lowpass', f0: 520, f1: 160, dur: 0.14, vol: 0.5 }); tn({ type: 'triangle', f0: 880, dur: 0.14, vol: 0.06, when: 0.05 }); tn({ type: 'triangle', f0: 1318.5, dur: 0.22, vol: 0.06, when: 0.13 }); },
+  hurry() { for (let i = 0; i < 3; i++) { tn({ type: 'sine', f0: 1318.5, dur: 0.55, vol: 0.12, when: i * 0.24 }); tn({ type: 'sine', f0: 2637, dur: 0.25, vol: 0.035, when: i * 0.24 }); } },
+  bird() { const n = Math.random() < 0.5 ? 2 : 3, b = rand(2600, 3600); for (let i = 0; i < n; i++) tn({ type: 'sine', f0: b * rand(0.95, 1.05), f1: b * rand(1.15, 1.35), dur: 0.07, vol: 0.022, when: i * rand(0.09, 0.14) }); }
+});
+// ===== Part S12: the workbench — spend scavenged parts on Mk upgrades for your guns and on the tower; it all lasts until the tower falls =====
+let ssDawnStage = 0;          // 0 night, 1 the dawn card (scavenging still to do), 2 scavenged (the workbench)
+let ssBenchSummary = null;    // what the last scavenge brought back
+let ssBenchFlash = '';        // the upgrade just bought (it flashes on the card)
+const ssBench = { parts: { scrap: 0, powder: 0, crystal: 0 }, mk: SNIPERS.map(() => 1), walls: 0, armour: 0, turret: 0, nades: 0, beacon: 0 };
+const SS_MK = [null, { d: 1, m: 1, r: 1 }, { d: 1.15, m: 1.25, r: 0.85 }, { d: 1.35, m: 1.5, r: 0.7 }];
+const SS_MK_NAME = ['', 'Mk I', 'Mk II', 'Mk III'];
+const SS_MK_COST = [null, null, { scrap: 4, powder: 2 }, { scrap: 6, powder: 3, crystal: 1 }];
+const SS_MK_FX = [null, null, '+15% damage · bigger mag · faster reload', '+35% damage · 50% bigger mag · fast reload'];
+const SS_TWR_UP = {
+  walls: { name: 'Thicker walls', max: 3, fx: '+250 max tower health', costs: [{ scrap: 5 }, { scrap: 7, powder: 2 }, { scrap: 9, powder: 3, crystal: 1 }] },
+  armour: { name: 'Armour plating', max: 3, fx: 'Steel plates: 8% less damage', costs: [{ scrap: 4, powder: 2 }, { scrap: 6, powder: 3 }, { scrap: 8, powder: 4, crystal: 1 }] },
+  turret: { name: 'Turret tune-up', max: 3, fx: 'Turrets hit 25% harder and faster', costs: [{ scrap: 3, powder: 3 }, { scrap: 5, powder: 4 }, { scrap: 7, powder: 5, crystal: 1 }] },
+  nades: { name: 'Grenade bag', max: 2, fx: 'Carry 2 more grenades', costs: [{ scrap: 2, powder: 4 }, { scrap: 3, powder: 6 }] },
+  beacon: { name: 'Crystal beacon', max: 1, fx: 'Zombies near the tower slow down', costs: [{ scrap: 4, crystal: 2 }] }
+};
+const SS_BEACON_R = 22;
+SNIPERS.forEach(d => { d.base = { dmg: d.dmg, mag: d.mag, reload: d.reload, splashDmg: d.splashDmg || 0, raySplash: d.ray ? d.ray.splashDmg : 0 }; });
+
+function ssNadeMax() { return SS_NADE_MAX + 2 * ssBench.nades; }
+const ssArmourMul = () => 1 - 0.08 * ssBench.armour;
+const ssMkTag = i => ssBench.mk[i] > 1 ? ' ' + SS_MK_NAME[ssBench.mk[i]] : '';
+function ssMkApply(i) {
+  const d = SNIPERS[i], b = d.base, M = SS_MK[ssBench.mk[i]];
+  d.dmg = Math.round(b.dmg * M.d); d.mag = Math.ceil(b.mag * M.m - 1e-6); d.reload = +(b.reload * M.r).toFixed(3);
+  if (b.splashDmg) d.splashDmg = Math.round(b.splashDmg * M.d);
+  if (d.ray) d.ray.splashDmg = Math.round(b.raySplash * M.d);
+}
+function ssBenchReset() {
+  Object.assign(ssBench, { parts: { scrap: 0, powder: 0, crystal: 0 }, mk: SNIPERS.map(() => 1), walls: 0, armour: 0, turret: 0, nades: 0, beacon: 0 });
+  SNIPERS.forEach((d, i) => ssMkApply(i));
+  ssDawnStage = 0; ssBenchSummary = null; ssBenchFlash = '';
+  ssBenchVisuals();
+}
+function ssBenchState() { return { parts: Object.assign({}, ssBench.parts), mk: ssBench.mk.slice(), walls: ssBench.walls, armour: ssBench.armour, turret: ssBench.turret, nades: ssBench.nades, beacon: ssBench.beacon }; }
+// Continue: put the bench upgrades back on top of the rebuilt tower (before the saved health is applied)
+function ssBenchLoad(b) {
+  if (!b) return;
+  const P = b.parts || {};
+  ssBench.parts = { scrap: Math.max(0, P.scrap | 0), powder: Math.max(0, P.powder | 0), crystal: Math.max(0, P.crystal | 0) };
+  ssBench.mk = SNIPERS.map((d, i) => clamp((b.mk && b.mk[i]) | 0 || 1, 1, 3));
+  for (const k in SS_TWR_UP) ssBench[k] = clamp(b[k] | 0, 0, SS_TWR_UP[k].max);
+  SNIPERS.forEach((d, i) => ssMkApply(i));
+  ssTowerMax += 250 * ssBench.walls;
+  ssBenchVisuals();
+}
+const ssCanPay = c => SCV_KINDS.every(k => (ssBench.parts[k] | 0) >= (c[k] | 0));
+function ssPay(c) { for (const k of SCV_KINDS) ssBench.parts[k] -= c[k] | 0; }
+function ssBenchBuy(key) {
+  if (state !== 'won') return;
+  if (key[0] === 'g') {
+    const i = +key.slice(1), lv = ssBench.mk[i]; if (!ssOwned.includes(i) || lv >= 3) return;
+    const c = SS_MK_COST[lv + 1]; if (!ssCanPay(c)) { ssBenchNo(key); return; }
+    ssPay(c); ssBench.mk[i] = lv + 1; ssMkApply(i); ssAmmo[i] = SNIPERS[i].mag;
+  } else {
+    const U = SS_TWR_UP[key], lv = ssBench[key]; if (!U || lv >= U.max) return;
+    const c = U.costs[lv]; if (!ssCanPay(c)) { ssBenchNo(key); return; }
+    ssPay(c); ssBench[key] = lv + 1;
+    if (key === 'walls') { ssTowerMax += 250; ssTowerHp = Math.min(ssTowerMax, ssTowerHp + 250); }
+    if (key === 'nades') ssNadeN = Math.min(ssNadeMax(), ssNadeN + 2);
+    ssBenchVisuals(key);
+  }
+  sfx('upgrade'); rumble(0.3, 0.3, 120);
+  ssBenchFlash = key;
+  ssSave(ssWave + 1, ssTowerMax);
+  const y = card.scrollTop; showCard('bench'); card.scrollTop = y;
+  const el = card.querySelector('[data-up="' + key + '"]'); if (el && padActive) { const els = padFocusables(); setPadFocus(els, els.indexOf(el)); }
+}
+function ssBenchNo(key) {
+  sfx('empty');
+  const el = card.querySelector('[data-up="' + key + '"]'); if (el) { el.classList.remove('nope'); void el.offsetWidth; el.classList.add('nope'); }
+}
+
+// ---------- The card ----------
+const ssPartChip = (k, n, have) => '<i class="c ' + k + (have === false ? ' no' : '') + '">' + n + ' ' + SCV_ITEM[k].glyph + '</i>';
+function ssCostHTML(c) { return '<span class="uc">' + SCV_KINDS.filter(k => c[k]).map(k => ssPartChip(k, c[k], (ssBench.parts[k] | 0) >= c[k])).join('') + '</span>'; }
+function ssBenchHTML() {
+  const N = ssWonNight || ssNightOf(ssWave), P = ssBench.parts, S = ssBenchSummary, flash = ssBenchFlash; ssBenchFlash = '';
+  let sum;
+  if (S) {
+    const got = SCV_KINDS.filter(k => S.banked[k]).map(k => S.banked[k] + ' ' + SCV_ITEM[k].name).join(', ');
+    sum = S.why === 'climb' ? (got ? 'You brought back ' + got + '.' : 'You came back empty-handed.')
+      : (S.why === 'time' ? 'Out of time' : 'Knocked down') + (S.lost ? ', and you dropped ' + S.lost + (S.lost === 1 ? ' item' : ' items') : '') + '.' + (got ? ' You had banked ' + got + '.' : '');
+    if (S.kills) sum += ' ' + S.kills + (S.kills === 1 ? ' straggler' : ' stragglers') + ' down.';
+  } else sum = 'Spend your parts on the guns and the tower. Upgrades last until the tower falls.';
+  const tile = (key, name, col, lvl, fx, cost, maxed) => {
+    const ok = !maxed && ssCanPay(cost);
+    return '<button class="up' + (maxed ? ' max' : '') + (flash === key ? ' flash' : '') + '" type="button" data-up="' + key + '"' + (ok ? '' : ' aria-disabled="true"') + '>' +
+      '<span class="un"' + (col ? ' style="color:' + col + '"' : '') + '>' + name + '</span><span class="ul">' + lvl + '</span>' +
+      (maxed ? '' : '<span class="ue">' + fx + '</span>' + ssCostHTML(cost)) + '</button>';
+  };
+  const guns = ssOwned.slice().sort((a, b) => a - b).map(i => {
+    const d = SNIPERS[i], lv = ssBench.mk[i], maxed = lv >= 3;
+    return tile('g' + i, d.name, RARITY_HEX[d.tier], maxed ? 'Mk III · maxed' : SS_MK_NAME[lv] + ' → ' + SS_MK_NAME[lv + 1], maxed ? '' : SS_MK_FX[lv + 1], maxed ? null : SS_MK_COST[lv + 1], maxed);
+  }).join('');
+  const tower = Object.keys(SS_TWR_UP).map(k => {
+    const U = SS_TWR_UP[k], lv = ssBench[k], maxed = lv >= U.max;
+    return tile(k, U.name, '', maxed ? (U.max > 1 ? 'Level ' + lv + ' · maxed' : 'Built') : (U.max > 1 ? 'Level ' + lv + ' → ' + (lv + 1) : 'Not built'), U.fx, maxed ? null : U.costs[lv], maxed);
+  }).join('');
+  const parts = SCV_KINDS.map(k => '<span class="pt ' + k + '"><i>' + SCV_ITEM[k].glyph + '</i><b>' + (P[k] | 0) + '</b>' + (k === 'scrap' ? 'Scrap' : k === 'powder' ? 'Gunpowder' : 'Crystals') + '</span>').join('');
+  return '<div class="panel bench"><p class="eyebrow">Dawn after night ' + N + '</p><h1 class="title">Workbench</h1>' +
+    '<p class="lead">' + sum + '</p><div class="parts">' + parts + '</div>' +
+    '<p class="label">Guns · Mk III needs a crystal</p><div class="ugrid">' + guns + '</div>' +
+    '<p class="label">Tower</p><div class="ugrid">' + tower + '</div>' +
+    '<div class="actions"><button class="btn primary" type="button" data-act="night">Start night ' + (N + 1) + '</button><button class="btn ghost" type="button" data-act="menu">Menu</button></div></div>';
+}
+// skip the scavenge: straight to the bench
+function ssBenchSkip() {
+  if (state !== 'won') return;
+  ssDawnStage = 2; ssBenchSummary = null; ssSave(ssWave + 1, ssTowerMax);
+  showCard('bench');
+}
+// Continue from a save made at dawn: back on the deck in the morning light, at the dawn card or the bench
+function ssDawnResume(sv) {
+  const w0 = sv.next - 1, N = ssNightOf(w0);
+  ssWave = w0; ssWaveActive = false; ssFinal = false; ssQueue = []; ssDayPhase = 2; ssDawnK = 1; ssWonNight = N; ssWonBonus = 2500 * N; ssSunKills = 0;
+  ssDawnStage = sv.dawn >= 2 ? 2 : 1; ssBenchSummary = null; ssRavensClear();
+  ssTowerHp = ssTowerMax;
+  state = 'won'; ssOverT = 0; card.hidden = true; hud.hidden = true;
+  player.yaw = Math.atan2(-SS_SUN_H.x, -SS_SUN_H.y); player.pitch = 0.1;
+  showCard(ssDawnStage >= 2 ? 'bench' : 'won');
+}
+
+// ---------- What the upgrades look like: steel plates on the palisade, a crystal on the tower ----------
+let ssPlates = null, ssBeacon = null;
+function ssBenchBuild() {
+  if (ssPlates || !SS.fence) return;
+  ssPlates = [];
+  const S = SS_LEG, steel = COLS(0x8a93a6), steelD = COLS(0x5a6274), rivet = COLS(0xc9d0dc), hz = COLS(0xffc23a), hzD = COLS(0x24262d), spike = COLS(0xd8dde6);
+  const faces = [[-1, -1, 1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [-1, 1, -1, -1]];
+  // level 1: a skirt of plates along the bottom; level 2: a second row above; level 3: hazard caps and spikes along the top
+  const rows = [[0.12, 0.82], [0.86, 1.56]];
+  for (let lv = 0; lv < 3; lv++) {
+    const gb = new GB();
+    for (const [ax, az, bx, bz] of faces) {
+      const alongX = ax !== bx, o = S + 0.27;
+      for (let k = 0; k < 5; k++) {
+        const u0 = -S * 0.9 + k * S * 0.36 + 0.04, u1 = u0 + S * 0.36 - 0.08, um = (u0 + u1) / 2, w = u1 - u0;
+        if (lv < 2) {
+          const [y0, y1] = rows[lv], ym = (y0 + y1) / 2, h = y1 - y0, col = (k + lv) % 2 ? steel : steelD;
+          if (alongX) gb.geo2(rbox(w, h, 0.07, 0.02, 1), mat4(um, ym, az * o, 0, 0, (k % 2 ? 1 : -1) * 0.02), col, PB.metal);
+          else gb.geo2(rbox(0.07, h, w, 0.02, 1), mat4(ax * o, ym, um, (k % 2 ? 1 : -1) * 0.02, 0, 0), col, PB.metal);
+          for (const yy of [y0 + 0.08, y1 - 0.08]) for (const uu of [u0 + 0.08, u1 - 0.08]) gb.geo2(sphG(6, 4), mat4(alongX ? uu : ax * (o + 0.04), yy, alongX ? az * (o + 0.04) : uu, 0, 0, 0, 0.03, 0.03, 0.03), rivet, PB.metal);
+        } else {
+          for (let s = 0; s < 6; s++) { const uu = u0 + (s + 0.5) * w / 6; gb.geo2(BOX1, mat4(alongX ? uu : ax * (o + 0.045), 1.6, alongX ? az * (o + 0.045) : uu, alongX ? 0 : 0.7, 0, alongX ? 0.7 : 0, alongX ? w / 6 * 0.7 : 0.012, 0.1, alongX ? 0.012 : w / 6 * 0.7), s % 2 ? hz : hzD, PB.paint); }
+          for (let s = 0; s < 3; s++) { const uu = u0 + (s + 0.5) * w / 3; gb.geo2(cylG(0, 0.06, 0.34, 6), mat4(alongX ? uu : ax * (o + 0.06), 1.78, alongX ? az * (o + 0.06) : uu, alongX ? az * 0.5 : 0, 0, alongX ? 0 : -ax * 0.5), spike, PB.metal); }
+        }
+      }
+    }
+    const m = gb.mesh(SSM.pbr, true, false, SS.fence); m.visible = false; ssPlates.push(m);
+  }
+  // the beacon: a big crystal hanging under the roof, and a faint ring on the ground marking where zombies slow down
+  ssBeacon = new T.Group();
+  const cg = new GB(), oct = new T.OctahedronGeometry(1, 0);
+  cg.geo2(oct, mat4(0, 0, 0, 0, 0.4, 0, 0.32, 0.62, 0.32), COLS(0x6ff3ff), [0.15, 0.2, 2.6]);
+  for (let k = 0; k < 4; k++) { const a = k / 4 * TAU; cg.geo2(oct, mat4(Math.cos(a) * 0.22, -0.2, Math.sin(a) * 0.22, Math.cos(a) * 0.5, 0, Math.sin(a) * 0.5, 0.12, 0.3, 0.12), COLS(0x2ab8e8), [0.15, 0.2, 2.2]); }
+  cg.geo2(cylG(1, 1, 1, 4), segM(0, 0.6, 0, 0, 1.6, 0, 0.015), COLS(0x2a2622), PB.metal);
+  const cm = cg.mesh(SSM.pbr, false, false, ssBeacon);
+  const halo = new T.Sprite(new T.SpriteMaterial({ map: TEX.ssGlow, color: 0x6ff3ff, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6, toneMapped: false }));
+  halo.scale.setScalar(2.4); ssBeacon.add(halo); ssBeacon.userData = { cm, halo };
+  ssBeacon.position.set(0, SS_PLAT + 2.85, 0); ssScene.add(ssBeacon);
+  // a band on the ground that follows the terrain round the tower
+  const n = 160, P = [], I = [];
+  for (let i = 0; i <= n; i++) { const a = i / n * TAU, c = Math.cos(a), s = Math.sin(a); for (const r of [SS_BEACON_R - 0.4, SS_BEACON_R]) P.push(c * r, ssH(c * r, s * r) + 0.12, s * r); if (i < n) { const k = i * 2; I.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } }
+  const rgeo = new T.BufferGeometry(); rgeo.setAttribute('position', new T.Float32BufferAttribute(P, 3)); rgeo.setIndex(I);
+  const ring = new T.Mesh(rgeo, new T.MeshBasicMaterial({ color: 0x6ff3ff, transparent: true, opacity: 0.22, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, toneMapped: false }));
+  ssScene.add(ring); ssBeacon.userData.ring = ring;
+  ssBeacon.visible = ring.visible = false;
+}
+function ssBenchVisuals(just) {
+  if (!SS.built) return;
+  ssBenchBuild();
+  ssPlates.forEach((m, i) => { m.visible = ssBench.armour > i; });
+  ssBeacon.visible = ssBeacon.userData.ring.visible = ssBench.beacon > 0;
+  if (just === 'armour') for (let i = 0; i < 16; i++) { const a = rand(0, TAU), r = SS_PAL * 1.1; setTimeout(() => { if (mode === 'ss') { ssSparks(Math.cos(a) * r, rand(0.3, 1.6), Math.sin(a) * r, 0xffd27a, 6, 3); } }, i * 60); }
+}
+function ssBeaconTick(dt) {
+  if (!ssBeacon || !ssBeacon.visible) return;
+  ssBeacon.rotation.y += dt * 0.7; const p = 0.6 + Math.sin(time * 2.2) * 0.2;
+  ssBeacon.userData.halo.material.opacity = p; ssBeacon.userData.ring.material.opacity = 0.14 + Math.sin(time * 1.4) * 0.06 * (1 - ssDawnK * 0.5);
+}
 // ===== Part Z: start-up =====
 resize();
 equip(primary);
