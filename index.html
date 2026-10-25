@@ -82,12 +82,12 @@ body{
 #strikeBtn svg{width:20px;height:20px}
 @keyframes strikePulse{0%{box-shadow:0 0 0 0 rgba(242,177,52,.55)}100%{box-shadow:0 0 0 14px rgba(242,177,52,0)}}
 
-#cross{position:absolute;left:50%;top:50%;width:0;height:0;--gap:8px}
-#cross .c{position:absolute;background:var(--ink);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
-#cross .t{width:2px;height:9px;left:-1px;top:calc(-1 * var(--gap) - 9px)}
-#cross .b{width:2px;height:9px;left:-1px;top:var(--gap)}
-#cross .l{width:9px;height:2px;top:-1px;left:calc(-1 * var(--gap) - 9px)}
-#cross .r{width:9px;height:2px;top:-1px;left:var(--gap)}
+#cross{position:absolute;left:50%;top:50%;width:0;height:0;--gap:8px;--xh:#cf56f0;filter:drop-shadow(0 0 1px rgba(0,0,0,.7))}
+#cross .c{position:absolute;background:var(--xh)}
+#cross .t{width:2px;height:6px;left:-1px;top:-7px}
+#cross .b{width:2px;height:6px;left:-1px;top:1px}
+#cross .l{width:6px;height:2px;top:-1px;left:-7px}
+#cross .r{width:6px;height:2px;top:-1px;left:1px}
 #cross .d{width:2px;height:2px;left:-1px;top:-1px}
 #hit{position:absolute;left:50%;top:50%;width:0;height:0;opacity:0}
 #hit i{position:absolute;width:2px;height:10px;left:-1px;top:-5px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
@@ -265,7 +265,7 @@ body.mode-ss{--amber:#ffc23a}
 .mode.on{border-color:var(--amber);background:rgba(242,177,52,.16)}
 .mode.on b{color:var(--amber)}
 .mode:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
-#keys{position:absolute;left:calc(var(--sl) + 16px);bottom:calc(var(--sb) + 30px);font-size:14px;letter-spacing:.06em;color:var(--ink-dim);transition:opacity .3s}
+#keys{position:absolute;left:calc(var(--sl) + 16px);bottom:calc(var(--sb) + 30px);font-size:14px;letter-spacing:.06em;color:var(--ink-dim);transition:opacity .3s;max-width:min(780px,calc(100% - 380px));line-height:1.45}
 #hint:not([hidden]) ~ #keys{opacity:0}#hint:not([hidden]) ~ #padKeys{opacity:0!important}
 
 #card{
@@ -375,9 +375,9 @@ body.scav #climbBtn.on{display:flex;animation:strikePulse 1.2s ease-out infinite
 .up.nope{animation:upNope .35s ease-in-out}
 @keyframes upFlash{0%{background:rgba(255,194,58,.55);transform:scale(1.04)}100%{background:rgba(255,255,255,.05);transform:scale(1)}}
 @keyframes upNope{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.c{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:5px}
-.c.scrap{background:#d3dae6;color:#1b1d24}.c.powder{background:#ff9a4a;color:#2a1406}.c.crystal{background:#6ff3ff;color:#06262a}
-.c.no{opacity:.35}
+.uc .c{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:5px}
+.uc .c.scrap{background:#d3dae6;color:#1b1d24}.uc .c.powder{background:#ff9a4a;color:#2a1406}.uc .c.crystal{background:#6ff3ff;color:#06262a}
+.uc .c.no{opacity:.35}
 @media (max-height:440px){.panel.bench{gap:6px;padding:10px 12px 12px}.bench .actions{margin:2px -12px -12px;padding:8px 12px calc(10px + var(--sb))}.bench .lead{font-size:13px}.bench .pt b{font-size:20px}.up{padding:6px 9px 7px}.ugrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
 </style>
 
@@ -2714,7 +2714,7 @@ card.addEventListener('click', e => {
     return;
   }
   const up = e.target.closest('[data-up]');
-  if (up && state === 'won' && mode === 'ss') { ssBenchBuy(up.dataset.up); return; }
+  if (up && (state === 'won' || state === 'paused') && mode === 'ss') { ssBenchBuy(up.dataset.up); return; }
   const se = e.target.closest('[data-ssequip]');
   if (se && state === 'paused' && mode === 'ss') { ssEquip(+se.dataset.ssequip, true); for (const kk in hudCache) delete hudCache[kk]; showCard('pause'); return; }
   const q = e.target.closest('[data-equip]');
@@ -2732,6 +2732,8 @@ card.addEventListener('click', e => {
   else if (a === 'night') ssNextNight();
   else if (a === 'scav') ssScavStart();
   else if (a === 'bench') ssBenchSkip();
+  else if (a === 'benchnight') ssBenchNightOpen();
+  else if (a === 'pausecard') { if (state === 'paused') { padFocusI = -1; showCard('pause'); } }
   else if (a === 'continue') ssDeploy(true);
   else if (a === 'newgame') { if (ssNewArm) ssDeploy(false); else { ssNewArm = true; showCard('title'); } }
   else if (a === 'menu') toMenu();
@@ -2831,7 +2833,7 @@ window.addEventListener('keydown', e => {
     keys.add(k);
     if (e.repeat) return;
     if (mode === 'ss' && scv.on && (k === 'Space' || k === 'KeyF')) scvClimb();
-    if (mode === 'ss') { if (k === 'KeyR') ssStartReload(); else if (k === 'KeyQ') ssWheelPress('key', true); else if (/^Digit[1-9]$/.test(k)) ssPickDirect(+k.slice(5) - 1); else if (k === 'KeyE') ssToggleScope(); else if (k === 'KeyG') ssNadeHold('key', true); else if (k === 'Escape' || k === 'KeyP') pause(); }
+    if (mode === 'ss') { if (k === 'KeyR') ssStartReload(); else if (k === 'KeyQ') ssWheelPress('key', true); else if (/^Digit[1-9]$/.test(k)) ssPickDirect(+k.slice(5) - 1); else if (k === 'KeyE') ssToggleScope(); else if (k === 'KeyG') ssNadeHold('key', true); else if (k === 'KeyB' && !scv.on) ssBenchNightOpen(); else if (k === 'Escape' || k === 'KeyP') pause(); }
     else if (k === 'KeyR') startReload();
     else if (k === 'KeyG') throwNade();
     else if (k === 'KeyF') callStrike();
@@ -2841,7 +2843,7 @@ window.addEventListener('keydown', e => {
     else if (k === 'KeyE') toggleAds();
     else if (k === 'Space') { queueJump(); lastTouch = false; }
     else if (k === 'Escape' || k === 'KeyP') pause();
-  } else if (state === 'paused' && (k === 'Escape' || k === 'KeyP')) resume();
+  } else if (state === 'paused' && (k === 'Escape' || k === 'KeyP' || (k === 'KeyB' && mode === 'ss' && card.querySelector('.panel.bench')))) resume();
   else if (state === 'title' && k === 'Enter') { if (mode === 'ss') ssDeploy(!!ssSaveGet()); else deploy(); }
   else if (state === 'won' && k === 'Enter') { const pb = card.querySelector('.btn.primary'); if (pb) pb.click(); }
 });
@@ -2891,7 +2893,7 @@ function setPadMode(on) {
   padActive = on; document.body.classList.toggle('pad', on);
   if (on) {
     lastTouch = false; ptrs.clear(); stickId = null; stickX = stickY = 0; fTouch = false; fireBtn.classList.remove('down'); resetStick();
-    if (!card.hidden && (state === 'title' || state === 'paused')) { padFocusI = -1; showCard(state === 'title' ? 'title' : 'pause'); }
+    if (!card.hidden && (state === 'title' || state === 'paused')) { padFocusI = -1; showCard(state === 'title' ? 'title' : card.querySelector('.panel.bench') ? 'bench' : 'pause'); }
     if (state === 'play') hintMsg('Controller connected', 1.8);
   } else { fPad = adsPad = false; padMoveX = padMoveY = 0; padSprint = false; clearPadFocus(); }
   for (const k in hudCache) delete hudCache[k];
@@ -2971,7 +2973,7 @@ function pollPad(dt) {
       if (dir !== padNavDir) { padNavDir = dir; padNavT = 0; padNavRep = false; }
       if (dir) { padNavT -= dt; if (padNavT <= 0) { setPadFocus(els, padFocusI + dir); padNavT = padNavRep ? 0.14 : 0.4; padNavRep = true; } }
       if (press(GP.cross)) { const el = els[padFocusI]; if (el) el.click(); }
-      else if (press(GP.circle) && st === 'paused') resume();
+      else if (press(GP.circle) && st === 'paused') { if (mode === 'ss' && card.querySelector('.panel.bench')) { padFocusI = -1; showCard('pause'); } else resume(); }
       else if (press(GP.options)) { if (st === 'paused') resume(); else if (st === 'won') { const pb = card.querySelector('.btn.primary'); if (pb) pb.click(); } else if (st === 'title' || st === 'over') { if (mode === 'ss') ssDeploy(st === 'title' && !!ssSaveGet()); else deploy(); } }
     }
   }
@@ -4468,7 +4470,7 @@ Object.assign(SFX, {
 const SS_EXPOSURE = 1.05, SS_TOWER_MAX = 1000;
 const SS_UNLOCKS = { 1: 2, 3: 3, 4: 4, 5: 5, 7: 6 };      // wave cleared -> weapon index (0 Night Owl and 1 Storm Howler are starters; 5 is the Grave Buster)
 const SS_PAD_LEGEND = '<b>R2</b> fire · <b>L2</b> aim · <b>R1</b> grenade, hold to aim · <b>△</b> switch, hold for the weapon wheel · <b>□</b> reload · <b>Left stick</b> move on the deck · <b>Options</b> pause';
-const SS_KEYS = 'WASD move on the deck · Click fire (auto-aims) · Right-click aim · G grenade, hold to aim · Q switch, hold for the weapon wheel · 1-8 pick a weapon · R reload · Esc pause';
+const SS_KEYS = 'WASD move on the deck · Click fire (auto-aims) · Right-click aim · G grenade, hold to aim · Q switch, hold for the weapon wheel · 1-8 pick a weapon · R reload · B workbench · Esc pause';
 const SS_NADE_START = 3, SS_NADE_MAX = 6;
 let ssWave = 0, ssWaveActive = false, ssQueue = [], ssSpawnT = 0, ssInterT = 0, ssMaxAlive = 12, ssScore = 0, ssTowerHp = SS_TOWER_MAX;
 let ssStats = { kills: 0, heads: 0, shots: 0, hits: 0 }, ssBest = { wave: 0, score: 0 }, ssNewBest = false;
@@ -5093,7 +5095,7 @@ function ssCardHTML(kind) {
   if (kind === 'pause') {
     return '<div class="panel"><p class="eyebrow">Paused · Night ' + ssNightOf(ssWaveShown()) + '</p><h1 class="title">' + ssWaveTitle() + '</h1>' +
       '<p class="lead">' + ssScore.toLocaleString() + ' pts, ' + ssStats.kills + ' zombies down. ' + (padActive ? 'Pick a weapon with the D-pad and press ✕.' : 'Tap a weapon to carry it.') + '</p>' + ssArsenalHTML(true) + (padActive ? '<p class="padline">' + SS_PAD_LEGEND + '</p>' : '') +
-      '<div class="actions"><button class="btn primary" type="button" data-act="resume">Resume</button><button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button><button class="btn ghost" type="button" data-act="menu">Quit</button></div></div>';
+      '<div class="actions"><button class="btn primary" type="button" data-act="resume">Resume</button><button class="btn ghost" type="button" data-act="benchnight">Workbench</button><button class="btn ghost" type="button" data-act="sound">' + soundLabel() + '</button><button class="btn ghost" type="button" data-act="menu">Quit</button></div></div>';
   }
   const acc = ssStats.shots ? Math.round(ssStats.hits / ssStats.shots * 100) : 0;
   return '<div class="panel"><p class="eyebrow danger">Tower destroyed · Night ' + ssNightOf(ssWaveShown()) + '</p><h1 class="title">' + ssWaveTitle() + '</h1>' +
@@ -6319,6 +6321,7 @@ function ssNextNight() {
   ssDayPhase = 3; ssDayT = 0; ssTowerHp = ssTowerMax; ssInterT = 8.5; ssDawnStage = 0; scvAbort();
   keepAwake(); wantLock();
   banner('Night ' + (ssWonNight + 1), 'Tower repaired. Night falls again', 3); ssRavensNight(ssWonNight + 1);
+  setTimeout(() => { if (state === 'play' && mode === 'ss' && !scv.on) ssBenchNightTip(); }, 3400);
   sfx('dusk');
 }
 // watching the sun come up behind the victory card
@@ -7821,8 +7824,11 @@ function ssBenchLoad(b) {
 }
 const ssCanPay = c => SCV_KINDS.every(k => (ssBench.parts[k] | 0) >= (c[k] | 0));
 function ssPay(c) { for (const k of SCV_KINDS) ssBench.parts[k] -= c[k] | 0; }
+// is the bench open from the pause menu at night (rather than at dawn)?
+const ssBenchAtNight = () => state === 'paused' && mode === 'ss' && !scv.on;
 function ssBenchBuy(key) {
-  if (state !== 'won') return;
+  const night = ssBenchAtNight();
+  if (state !== 'won' && !night) return;
   if (key[0] === 'g') {
     const i = +key.slice(1), lv = ssBench.mk[i]; if (!ssOwned.includes(i) || lv >= 3) return;
     const c = SS_MK_COST[lv + 1]; if (!ssCanPay(c)) { ssBenchNo(key); return; }
@@ -7837,9 +7843,30 @@ function ssBenchBuy(key) {
   }
   sfx('upgrade'); rumble(0.3, 0.3, 120);
   ssBenchFlash = key;
-  ssSave(ssWave + 1, ssTowerMax);
+  if (night) ssSaveBench(); else ssSave(ssWave + 1, ssTowerMax);
   const y = card.scrollTop; showCard('bench'); card.scrollTop = y;
   const el = card.querySelector('[data-up="' + key + '"]'); if (el && padActive) { const els = padFocusables(); setPadFocus(els, els.indexOf(el)); }
+}
+// bought at night: the saved run keeps its wave and health, only the bench part changes
+function ssSaveBench() { const s = ssSaveGet(); if (!s) return; s.bench = ssBenchState(); store.set(SS_SAVE_KEY, JSON.stringify(s)); }
+// open the bench mid-night: the game pauses while you shop (pause menu, or B on a keyboard)
+function ssBenchNightOpen() {
+  if (mode !== 'ss' || scv.on) return;
+  if (state === 'play') pause();
+  if (state !== 'paused') return;
+  padFocusI = -1; showCard('bench'); card.scrollTop = 0; sfx('swap');
+}
+// anything on the bench you could buy right now?
+function ssBenchAffordable() {
+  for (const i of ssOwned) { const lv = ssBench.mk[i]; if (lv < 3 && ssCanPay(SS_MK_COST[lv + 1])) return true; }
+  for (const k in SS_TWR_UP) { const U = SS_TWR_UP[k], lv = ssBench[k]; if (lv < U.max && ssCanPay(U.costs[lv])) return true; }
+  return false;
+}
+let ssBenchTipped = false;
+function ssBenchNightTip() {
+  if (ssBenchTipped || !ssBenchAffordable()) return;
+  ssBenchTipped = true;
+  hintMsg(padActive ? 'Spare parts? Options, then Workbench' : isTouch ? 'Spare parts? Pause, then Workbench' : 'Spare parts? Press B for the workbench', 3.6);
 }
 function ssBenchNo(key) {
   sfx('empty');
@@ -7850,9 +7877,11 @@ function ssBenchNo(key) {
 const ssPartChip = (k, n, have) => '<i class="c ' + k + (have === false ? ' no' : '') + '">' + n + ' ' + SCV_ITEM[k].glyph + '</i>';
 function ssCostHTML(c) { return '<span class="uc">' + SCV_KINDS.filter(k => c[k]).map(k => ssPartChip(k, c[k], (ssBench.parts[k] | 0) >= c[k])).join('') + '</span>'; }
 function ssBenchHTML() {
-  const N = ssWonNight || ssNightOf(ssWave), P = ssBench.parts, S = ssBenchSummary, flash = ssBenchFlash; ssBenchFlash = '';
+  const night = ssBenchAtNight();
+  const N = night ? ssNightOf(ssWaveShown()) : ssWonNight || ssNightOf(ssWave), P = ssBench.parts, S = night ? null : ssBenchSummary, flash = ssBenchFlash; ssBenchFlash = '';
   let sum;
-  if (S) {
+  if (night) sum = SCV_KINDS.some(k => P[k] > 0) ? 'Spend your parts on the guns and the tower. The night waits while you shop.' : 'No parts yet. Scavenge at dawn for scrap, gunpowder and crystals.';
+  else if (S) {
     const got = SCV_KINDS.filter(k => S.banked[k]).map(k => S.banked[k] + ' ' + SCV_ITEM[k].name).join(', ');
     sum = S.why === 'climb' ? (got ? 'You brought back ' + got + '.' : 'You came back empty-handed.')
       : (S.why === 'time' ? 'Out of time' : 'Knocked down') + (S.lost ? ', and you dropped ' + S.lost + (S.lost === 1 ? ' item' : ' items') : '') + '.' + (got ? ' You had banked ' + got + '.' : '');
@@ -7873,11 +7902,13 @@ function ssBenchHTML() {
     return tile(k, U.name, '', maxed ? (U.max > 1 ? 'Level ' + lv + ' · maxed' : 'Built') : (U.max > 1 ? 'Level ' + lv + ' → ' + (lv + 1) : 'Not built'), U.fx, maxed ? null : U.costs[lv], maxed);
   }).join('');
   const parts = SCV_KINDS.map(k => '<span class="pt ' + k + '"><i>' + SCV_ITEM[k].glyph + '</i><b>' + (P[k] | 0) + '</b>' + (k === 'scrap' ? 'Scrap' : k === 'powder' ? 'Gunpowder' : 'Crystals') + '</span>').join('');
-  return '<div class="panel bench"><p class="eyebrow">Dawn after night ' + N + '</p><h1 class="title">Workbench</h1>' +
+  const acts = night ? '<button class="btn primary" type="button" data-act="resume">Resume</button><button class="btn ghost" type="button" data-act="pausecard">Back</button>'
+    : '<button class="btn primary" type="button" data-act="night">Start night ' + (N + 1) + '</button><button class="btn ghost" type="button" data-act="menu">Menu</button>';
+  return '<div class="panel bench"><p class="eyebrow">' + (night ? 'Paused · Night ' + N : 'Dawn after night ' + N) + '</p><h1 class="title">Workbench</h1>' +
     '<p class="lead">' + sum + '</p><div class="parts">' + parts + '</div>' +
     '<p class="label">Guns · Mk III needs a crystal</p><div class="ugrid">' + guns + '</div>' +
     '<p class="label">Tower</p><div class="ugrid">' + tower + '</div>' +
-    '<div class="actions"><button class="btn primary" type="button" data-act="night">Start night ' + (N + 1) + '</button><button class="btn ghost" type="button" data-act="menu">Menu</button></div></div>';
+    '<div class="actions">' + acts + '</div></div>';
 }
 // skip the scavenge: straight to the bench
 function ssBenchSkip() {
